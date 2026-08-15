@@ -29,6 +29,27 @@ export const STRAIGHT = 0.5
 /** Where the off-beat lands in a swung beat: two thirds of the way through. */
 export const FULL_SWING = 2 / 3
 
+/**
+ * How far into the beat the off-beat eighth falls.
+ *
+ * Measurements of jazz drummers (Friberg & Sundström) put the ratio near 3.5:1
+ * at slow tempos and close to 1:1 above 250bpm, with the notated 2:1 triplet
+ * feel sitting somewhere in the middle. Reading practice wants that middle:
+ * the triplet feel is what the notation implies, and it is unambiguous.
+ */
+export const SWING_SETTINGS = [
+  { id: 'straight', label: 'Straight', ratio: STRAIGHT },
+  { id: 'light', label: 'Light', ratio: 0.6 },
+  { id: 'medium', label: 'Medium', ratio: FULL_SWING },
+  { id: 'deep', label: 'Deep', ratio: 0.75 },
+] as const
+
+export type SwingId = (typeof SWING_SETTINGS)[number]['id']
+
+export function swingRatio(id: SwingId): number {
+  return SWING_SETTINGS.find((s) => s.id === id)?.ratio ?? FULL_SWING
+}
+
 /** Bass notes are walked, not held: a touch short of the next beat. */
 const BASS_DURATION = 0.9
 

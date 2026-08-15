@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Level } from './music/rhythm'
 import type { ActiveNote } from './components/Score'
-import type { BassVoice, MelodyVoice } from './audio/instruments'
+import type { SwingId } from './audio/schedule'
 import { generateExercise } from './music/exercise'
 import { PROGRESSIONS } from './music/progression'
 import { KEYS } from './music/pitch'
-import { FULL_SWING, STRAIGHT } from './audio/schedule'
-import { BASS_VOICES, MELODY_VOICES } from './audio/instruments'
+import { SWING_SETTINGS, swingRatio } from './audio/schedule'
 import { Player } from './audio/player'
 import { Score } from './components/Score'
 import './App.css'
@@ -22,13 +21,11 @@ export default function App() {
   const [seed, setSeed] = useState(randomSeed)
 
   const [bpm, setBpm] = useState(60)
-  const [swing, setSwing] = useState(true)
+  const [swing, setSwing] = useState<SwingId>('medium')
   const [countIn, setCountIn] = useState(true)
   const [metronome, setMetronome] = useState(false)
   const [playBass, setPlayBass] = useState(true)
   const [playMelody, setPlayMelody] = useState(true)
-  const [bassVoice, setBassVoice] = useState<BassVoice>('synth')
-  const [melodyVoice, setMelodyVoice] = useState<MelodyVoice>('synth')
 
   const [playing, setPlaying] = useState(false)
   const [activeBass, setActiveBass] = useState<ActiveNote | null>(null)
@@ -51,13 +48,11 @@ export default function App() {
   const play = useCallback(async () => {
     await player.start(exercise, {
       bpm,
-      swing: swing ? FULL_SWING : STRAIGHT,
+      swing: swingRatio(swing),
       countIn,
       metronome,
       muteBass: !playBass,
       muteMelody: !playMelody,
-      bassVoice,
-      melodyVoice,
       onNote: (part, barIndex, index) => {
         const note = { barIndex, index }
         if (part === 'bass') setActiveBass(note)
@@ -78,8 +73,6 @@ export default function App() {
     metronome,
     playBass,
     playMelody,
-    bassVoice,
-    melodyVoice,
     clearHighlight,
   ])
 
@@ -99,7 +92,7 @@ export default function App() {
     if (!player.isPlaying) return
     void play()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [swing, countIn, bassVoice, melodyVoice, exercise])
+  }, [swing, countIn, exercise])
 
   useEffect(() => () => player.stop(), [player])
 
@@ -166,33 +159,14 @@ export default function App() {
         </label>
 
         <label>
-          Bass sound
-          <select value={bassVoice} onChange={(e) => setBassVoice(e.target.value as BassVoice)}>
-            {BASS_VOICES.map((voice) => (
-              <option key={voice.id} value={voice.id}>
-                {voice.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Melody sound
-          <select
-            value={melodyVoice}
-            onChange={(e) => setMelodyVoice(e.target.value as MelodyVoice)}
-          >
-            {MELODY_VOICES.map((voice) => (
-              <option key={voice.id} value={voice.id}>
-                {voice.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="check">
-          <input type="checkbox" checked={swing} onChange={(e) => setSwing(e.target.checked)} />
           Swing
+          <select value={swing} onChange={(e) => setSwing(e.target.value as SwingId)}>
+            {SWING_SETTINGS.map((setting) => (
+              <option key={setting.id} value={setting.id}>
+                {setting.label}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="check">

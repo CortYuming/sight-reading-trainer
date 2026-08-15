@@ -1,8 +1,6 @@
 import * as Tone from 'tone'
 import type { Exercise } from '../music/exercise'
 import type { Part, ScheduledNote } from './schedule'
-import type { BassVoice, Instrument, MelodyVoice } from './instruments'
-import { createBass, createMelody } from './instruments'
 import { scheduleExercise } from './schedule'
 
 export interface PlayerOptions {
@@ -13,8 +11,6 @@ export interface PlayerOptions {
   metronome: boolean
   muteBass: boolean
   muteMelody: boolean
-  bassVoice: BassVoice
-  melodyVoice: MelodyVoice
   onNote: (part: Part, barIndex: number, index: number) => void
   onStop: () => void
 }
@@ -40,8 +36,8 @@ function atBeat(beats: number): string {
 
 export class Player {
   private parts: Tone.Part[] = []
-  private bass: Instrument | null = null
-  private melody: Instrument | null = null
+  private bass: Tone.Synth | null = null
+  private melody: Tone.Synth | null = null
   private click: Tone.NoiseSynth | null = null
   private clickFilter: Tone.Filter | null = null
   private options: PlayerOptions | null = null
@@ -61,7 +57,7 @@ export class Player {
     // Swing is baked into the schedule, so the transport must not add its own.
     transport.swing = 0
 
-    this.buildInstruments(options.bassVoice, options.melodyVoice)
+    this.buildInstruments()
 
     const { notes, beats } = scheduleExercise(exercise, options.swing)
     const offset = options.countIn ? COUNT_IN_BEATS : 0
@@ -134,9 +130,19 @@ export class Player {
     this.click?.triggerAttackRelease('32n', time, event.downbeat ? 1 : 0.5)
   }
 
-  private buildInstruments(bassVoice: BassVoice, melodyVoice: MelodyVoice): void {
-    this.bass = createBass(bassVoice)
-    this.melody = createMelody(melodyVoice)
+  private buildInstruments(): void {
+    // Plain synths on purpose: the pitch and the rhythm have to be obvious,
+    // and richer voices made both harder to follow.
+    this.bass = new Tone.Synth({
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.005, decay: 0.25, sustain: 0.2, release: 0.3 },
+      volume: -4,
+    }).toDestination()
+    this.melody = new Tone.Synth({
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.004, decay: 0.2, sustain: 0.25, release: 0.25 },
+      volume: -8,
+    }).toDestination()
 
     this.clickFilter = new Tone.Filter({ frequency: 4000, type: 'highpass' }).toDestination()
     this.click = new Tone.NoiseSynth({
