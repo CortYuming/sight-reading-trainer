@@ -78,9 +78,12 @@ h1 {
 /*
  * VexFlow writes colours as SVG presentation attributes, which CSS can
  * override — so the notation follows the page theme instead of staying black.
+ * Staff lines and stems carry no stroke of their own: they inherit it from the
+ * root, so the root needs both fill and stroke or the lines stay black.
  */
 .measure svg {
   fill: var(--text);
+  stroke: var(--text);
   display: block;
 }
 
