@@ -8,15 +8,21 @@ Every exercise is generated, so the page never runs out of new material.
 
 ## Status
 
-Phase 1 — the exercise generator and its tests. Notation and playback are not in
-yet, so the app currently prints each generated exercise as text.
+Phase 2 — the exercise is drawn as notation. Playback is not in yet.
 
 Roadmap:
 
-1. **Phase 1** — exercise generator (chords, walking bass, rhythm, melody)
-2. **Phase 2** — notation on two staves (VexFlow)
+1. ~~**Phase 1** — exercise generator (chords, walking bass, rhythm, melody)~~
+2. ~~**Phase 2** — notation on two staves (VexFlow)~~
 3. **Phase 3** — playback with swing feel (Tone.js)
 4. **Phase 4** — settings, responsive layout, GitHub Pages
+
+## Notation
+
+Both columns use a treble clef with an 8vb mark, the standard for guitar.
+Clef, key signature and time signature are drawn on the first row only: every
+row is one bar, and repeating the header on each of them would eat most of the
+width on a phone.
 
 ## How an exercise is built
 

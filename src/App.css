@@ -5,8 +5,8 @@
 }
 
 h1 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  margin: 0 0 1rem;
 }
 
 .controls {
@@ -36,27 +36,78 @@ h1 {
   opacity: 0.6;
 }
 
-.dump {
+/* Score */
+
+.score {
   width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
 }
 
-.dump th,
-.dump td {
-  border-bottom: 1px solid var(--border, #ddd);
-  padding: 0.4rem 0.5rem;
-  text-align: left;
-  vertical-align: top;
+.row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
 }
 
-.mono {
-  font-family: var(--mono, ui-monospace, monospace);
+.column {
+  flex: 0 0 auto;
+}
+
+/* The dividing line between the two pages, as in the original exercise. */
+.column.melody {
+  border-left: 1px solid var(--border);
+  padding-left: 1rem;
+}
+
+.row-label {
+  font-size: 0.75rem;
+  opacity: 0.55;
+  height: 1.1rem;
+  line-height: 1.1rem;
+}
+
+.row-label.chord {
   font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 1;
+}
+
+.measure {
+  overflow: visible;
+}
+
+/*
+ * VexFlow writes colours as SVG presentation attributes, which CSS can
+ * override — so the notation follows the page theme instead of staying black.
+ */
+.measure svg {
+  fill: var(--text);
+  display: block;
+}
+
+.measure svg [fill]:not([fill='none']) {
+  fill: var(--text);
+}
+
+.measure svg [stroke]:not([stroke='none']) {
+  stroke: var(--text);
 }
 
 .note {
   margin-top: 1.5rem;
   font-size: 0.8rem;
   opacity: 0.7;
+}
+
+@media (max-width: 30rem) {
+  .app {
+    padding: 1rem 0.5rem 3rem;
+  }
+
+  .row {
+    gap: 0.5rem;
+  }
+
+  .column.melody {
+    padding-left: 0.5rem;
+  }
 }

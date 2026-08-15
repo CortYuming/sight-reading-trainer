@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
 import type { Level } from './music/rhythm'
-import type { SpelledMelodyEvent } from './music/exercise'
 import { generateExercise } from './music/exercise'
 import { PROGRESSIONS } from './music/progression'
 import { KEYS } from './music/pitch'
-import { spelledName } from './music/spelling'
+import { Score } from './components/Score'
 import './App.css'
 
 const LEVELS: Level[] = [1, 2, 3, 4]
@@ -72,40 +71,12 @@ export default function App() {
         <span className="seed">seed {exercise.seed}</span>
       </div>
 
-      <table className="dump">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Chord</th>
-            <th>Bass (strings 6-4)</th>
-            <th>Melody (strings 3-1)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {exercise.bars.map((bar, i) => (
-            <tr key={i}>
-              <td>{i + 1}</td>
-              <td>{bar.chord.label}</td>
-              <td className="mono">{bar.bass.map(spelledName).join(' ')}</td>
-              <td className="mono">{bar.melody.map(describeEvent).join(' ')}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Score exercise={exercise} />
 
       <p className="note">
-        Written pitch — guitar notation sounds one octave lower. Melody is shown as
-        duration:pitch, where <code>r</code> is a rest, <code>~</code> a tie and <code>t</code> a
-        triplet.
+        Left: the beat, in quarter notes. Right: the same beats, split. Both staves are guitar
+        notation, sounding one octave lower than written.
       </p>
     </main>
   )
-}
-
-/** e.g. "8:Db5~", "16r", "8t:F5" */
-function describeEvent(event: SpelledMelodyEvent): string {
-  const duration = event.dur + '.'.repeat(event.dots) + (event.triplet !== undefined ? 't' : '')
-  if (event.rest) return `${duration}r`
-  const pitch = event.spelled === null ? '?' : spelledName(event.spelled)
-  return `${duration}:${pitch}${event.tie ? '~' : ''}`
 }
