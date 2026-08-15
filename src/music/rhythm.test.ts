@@ -87,6 +87,16 @@ describe('generateBarRhythm', () => {
     }
   })
 
+  it('level 1 repeats one pattern across all four beats', () => {
+    for (const seed of SEEDS) {
+      const events = generateBarRhythm(1, createRng(seed))
+      // Four quarters, or four pairs of eighths — nothing mixed.
+      expect([4, 8]).toContain(events.length)
+      const durations = new Set(events.map((e) => e.dur))
+      expect(durations.size).toBe(1)
+    }
+  })
+
   it('keeps sixteenths out of levels 1 and 2', () => {
     for (const level of [1, 2] as Level[]) {
       for (const seed of SEEDS) {

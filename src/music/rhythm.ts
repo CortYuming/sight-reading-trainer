@@ -99,18 +99,26 @@ function patternsFor(level: Level): BeatPattern[] {
  *
  * Beat 1 always carries a note so the bar has an audible downbeat, and ties
  * across beat boundaries add the off-beat push that makes a line swing.
+ *
+ * Level 1 draws one pattern and repeats it across all four beats: the reader
+ * meets a single rhythm per bar and can put their attention on the pitches.
  */
 export function generateBarRhythm(level: Level, rng: Rng): BarEvent[] {
   const pool = patternsFor(level)
   const weights = pool.map((p) => p.weight)
 
   const beats: BeatPattern[] = []
-  for (let beat = 0; beat < 4; beat++) {
-    let pattern = rng.weighted(pool, weights)
-    for (let retry = 0; beat === 0 && pattern.notes[0].rest && retry < 4; retry++) {
-      pattern = rng.weighted(pool, weights)
+  if (level === 1) {
+    const pattern = rng.weighted(pool, weights)
+    for (let beat = 0; beat < 4; beat++) beats.push(pattern)
+  } else {
+    for (let beat = 0; beat < 4; beat++) {
+      let pattern = rng.weighted(pool, weights)
+      for (let retry = 0; beat === 0 && pattern.notes[0].rest && retry < 4; retry++) {
+        pattern = rng.weighted(pool, weights)
+      }
+      beats.push(pattern)
     }
-    beats.push(pattern)
   }
 
   const events: BarEvent[] = []

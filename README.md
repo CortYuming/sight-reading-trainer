@@ -64,7 +64,8 @@ phone. There is no time signature — every exercise is in 4/4.
   tones on the beat, stepwise motion in between. Range: written G4-B5, i.e.
   strings 3-1.
 - Levels: 1 quarters and eighths, 2 adds rests and ties, 3 adds sixteenths,
-  4 adds triplets.
+  4 adds triplets. Level 1 repeats one rhythm across all four beats of a bar,
+  so the reading is all in the pitches.
 
 All pitches are **written** pitches. Guitar notation sounds one octave lower
 than written.
