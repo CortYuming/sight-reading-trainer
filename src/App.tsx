@@ -115,6 +115,12 @@ export default function App() {
     [barCount, queueMove, pending, currentBar, barRepeat],
   )
 
+  /** Step from whatever is queued, so repeated presses keep moving. */
+  const stepBar = useCallback(
+    (delta: number) => goToBar((pending?.bar ?? currentBar) + delta),
+    [goToBar, pending, currentBar],
+  )
+
   const toggleBarRepeat = useCallback(() => {
     const repeating = pending?.repeat ?? barRepeat
     queueMove(pending?.bar ?? currentBar, !repeating)
@@ -133,11 +139,11 @@ export default function App() {
       switch (event.key) {
         case 'ArrowLeft':
           event.preventDefault()
-          goToBar(currentBar - 1)
+          stepBar(-1)
           break
         case 'ArrowRight':
           event.preventDefault()
-          goToBar(currentBar + 1)
+          stepBar(1)
           break
         case 'ArrowUp':
           event.preventDefault()
@@ -151,7 +157,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [currentBar, goToBar, toggleBarRepeat, toggle])
+  }, [stepBar, toggleBarRepeat, toggle])
 
   // Tempo and mutes take effect without interrupting playback.
   useEffect(() => player.setBpm(bpm), [player, bpm])
@@ -197,7 +203,7 @@ export default function App() {
               type="button"
               className="btn icon"
               aria-label="Previous bar"
-              onClick={() => goToBar(currentBar - 1)}
+              onClick={() => stepBar(-1)}
             >
               &#8249;
             </button>
@@ -216,7 +222,7 @@ export default function App() {
               type="button"
               className="btn icon"
               aria-label="Next bar"
-              onClick={() => goToBar(currentBar + 1)}
+              onClick={() => stepBar(1)}
             >
               &#8250;
             </button>

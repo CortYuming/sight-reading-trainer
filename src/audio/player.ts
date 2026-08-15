@@ -149,10 +149,13 @@ export class Player {
     }
     const transport = Tone.getTransport()
     this.cancelQueued()
+    // One tick early on purpose: while a single bar is looping, the barline is
+    // the loop point, and the transport jumps back before ever reaching it.
+    const boundary = Math.max(0, this.nextBarBoundaryTicks() - 1)
     this.queuedId = transport.scheduleOnce((time) => {
       this.queuedId = null
       Tone.getDraw().schedule(callback, time)
-    }, `${this.nextBarBoundaryTicks()}i`)
+    }, `${boundary}i`)
   }
 
   cancelQueued(): void {
