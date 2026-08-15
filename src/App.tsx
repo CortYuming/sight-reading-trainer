@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import type { Level } from './music/rhythm'
-import type { MelodyEvent } from './music/melody'
-import type { Accidental } from './music/pitch'
+import type { SpelledMelodyEvent } from './music/exercise'
 import { generateExercise } from './music/exercise'
 import { PROGRESSIONS } from './music/progression'
-import { KEYS, noteName } from './music/pitch'
+import { KEYS } from './music/pitch'
+import { spelledName } from './music/spelling'
 import './App.css'
 
 const LEVELS: Level[] = [1, 2, 3, 4]
@@ -26,8 +26,6 @@ export default function App() {
     () => generateExercise({ keyName, progressionId, level, seed }),
     [keyName, progressionId, level, seed],
   )
-
-  const prefer = exercise.key.prefer
 
   return (
     <main className="app">
@@ -88,10 +86,8 @@ export default function App() {
             <tr key={i}>
               <td>{i + 1}</td>
               <td>{bar.chord.label}</td>
-              <td className="mono">{bar.bass.map((midi) => noteName(midi, prefer)).join(' ')}</td>
-              <td className="mono">
-                {bar.melody.map((event) => describeEvent(event, prefer)).join(' ')}
-              </td>
+              <td className="mono">{bar.bass.map(spelledName).join(' ')}</td>
+              <td className="mono">{bar.melody.map(describeEvent).join(' ')}</td>
             </tr>
           ))}
         </tbody>
@@ -107,9 +103,9 @@ export default function App() {
 }
 
 /** e.g. "8:Db5~", "16r", "8t:F5" */
-function describeEvent(event: MelodyEvent, prefer: Accidental): string {
+function describeEvent(event: SpelledMelodyEvent): string {
   const duration = event.dur + '.'.repeat(event.dots) + (event.triplet !== undefined ? 't' : '')
   if (event.rest) return `${duration}r`
-  const pitch = event.midi === null ? '?' : noteName(event.midi, prefer)
+  const pitch = event.spelled === null ? '?' : spelledName(event.spelled)
   return `${duration}:${pitch}${event.tie ? '~' : ''}`
 }
