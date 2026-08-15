@@ -36,6 +36,10 @@
   color: var(--muted);
 }
 
+.readout.wide {
+  min-width: 6rem;
+}
+
 .readout {
   font-size: 0.78rem;
   color: var(--muted);
@@ -84,6 +88,12 @@ select {
   min-width: 1.9rem;
   text-align: center;
   padding: 0.25rem 0.35rem;
+}
+
+.btn.icon.pending {
+  border-color: var(--accent);
+  color: var(--accent);
+  border-style: dashed;
 }
 
 .btn.icon.on {
@@ -176,6 +186,12 @@ select {
 .row.current {
   border-left-color: var(--accent);
   background: var(--accent-soft);
+}
+
+/* Queued: this is where the music goes at the next barline. */
+.row.pending {
+  border-left-color: var(--accent);
+  border-left-style: dashed;
 }
 
 .column {

@@ -19,6 +19,8 @@ export interface ActiveNote {
 interface ScoreProps {
   exercise: Exercise
   currentBar: number
+  /** Bar the music will switch to at the next barline, if one is queued. */
+  pendingBar: number | null
   activeBass: ActiveNote | null
   activeMelody: ActiveNote | null
   onSelectBar: (bar: number) => void
@@ -27,6 +29,7 @@ interface ScoreProps {
 export function Score({
   exercise,
   currentBar,
+  pendingBar,
   activeBass,
   activeMelody,
   onSelectBar,
@@ -57,7 +60,9 @@ export function Score({
     <div className="score" ref={ref}>
       {bars.map((bar, i) => (
         <div
-          className={`row${i === currentBar ? ' current' : ''}`}
+          className={`row${i === currentBar ? ' current' : ''}${
+            i === pendingBar && i !== currentBar ? ' pending' : ''
+          }`}
           key={i}
           ref={(element) => {
             rows.current[i] = element

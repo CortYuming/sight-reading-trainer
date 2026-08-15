@@ -30,6 +30,8 @@ export default function App() {
   const [playing, setPlaying] = useState(false)
   const [currentBar, setCurrentBar] = useState(0)
   const [barRepeat, setBarRepeat] = useState(false)
+  // What the next barline will switch to, while the current bar finishes.
+  const [pending, setPending] = useState<PendingMove | null>(null)
   const [activeBass, setActiveBass] = useState<ActiveNoteState>(null)
   const [activeMelody, setActiveMelody] = useState<ActiveNoteState>(null)
 
@@ -79,25 +81,44 @@ export default function App() {
   const stop = useCallback(() => {
     player.stop()
     setPlaying(false)
+    setPending(null)
     clearHighlight()
   }, [player, clearHighlight])
+
+  /** Moves land on the next barline, so the bar being read is never cut off. */
+  const queueMove = useCallback(
+    (bar: number, repeat: boolean) => {
+      setBarRepeat(repeat)
+      if (!player.isPlaying) {
+        setCurrentBar(bar)
+        setPending(null)
+        return
+      }
+      setPending({ bar, repeat })
+      player.queueAtBarEnd(() => {
+        setPending(null)
+        void play(bar, repeat ? bar : null)
+      })
+    },
+    [player, play],
+  )
 
   // Navigation restarts playback at the new bar. A rebuild is cheap, and it
   // keeps one code path for "where does the music start and what loops".
   const goToBar = useCallback(
     (bar: number) => {
+      const from = pending?.bar ?? currentBar
       const target = Math.max(0, Math.min(bar, barCount - 1))
-      setCurrentBar(target)
-      if (player.isPlaying) void play(target, barRepeat ? target : null)
+      if (target === from && pending === null) return
+      queueMove(target, pending?.repeat ?? barRepeat)
     },
-    [barCount, player, play, barRepeat],
+    [barCount, queueMove, pending, currentBar, barRepeat],
   )
 
   const toggleBarRepeat = useCallback(() => {
-    const next = !barRepeat
-    setBarRepeat(next)
-    if (player.isPlaying) void play(currentBar, next ? currentBar : null)
-  }, [barRepeat, player, play, currentBar])
+    const repeating = pending?.repeat ?? barRepeat
+    queueMove(pending?.bar ?? currentBar, !repeating)
+  }, [queueMove, pending, barRepeat, currentBar])
 
   const toggle = useCallback(() => {
     if (playing) stop()
@@ -145,6 +166,7 @@ export default function App() {
 
   useEffect(() => {
     setCurrentBar(0)
+    setPending(null)
   }, [exercise])
 
   useEffect(() => () => player.stop(), [player])
@@ -181,7 +203,9 @@ export default function App() {
             </button>
             <button
               type="button"
-              className={`btn icon${barRepeat ? ' on' : ''}`}
+              className={`btn icon${barRepeat ? ' on' : ''}${
+                pending?.repeat === true && !barRepeat ? ' pending' : ''
+              }`}
               aria-pressed={barRepeat}
               aria-label="Repeat this bar"
               onClick={toggleBarRepeat}
@@ -196,8 +220,9 @@ export default function App() {
             >
               &#8250;
             </button>
-            <span className="readout">
+            <span className="readout wide">
               Bar {currentBar + 1}/{barCount}
+              {pending !== null && pending.bar !== currentBar ? ` \u2192 ${pending.bar + 1}` : ''}
             </span>
           </div>
         </div>
@@ -261,6 +286,7 @@ export default function App() {
         <Score
           exercise={exercise}
           currentBar={currentBar}
+          pendingBar={pending?.bar ?? null}
           activeBass={activeBass}
           activeMelody={activeMelody}
           onSelectBar={goToBar}
@@ -280,6 +306,11 @@ export default function App() {
 }
 
 type ActiveNoteState = { barIndex: number; index: number } | null
+
+interface PendingMove {
+  bar: number
+  repeat: boolean
+}
 
 interface ChipProps {
   label: string

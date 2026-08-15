@@ -52,6 +52,9 @@ export class Player {
   private clickFilter: Tone.Filter | null = null
   private options: PlayerOptions | null = null
   private playing = false
+  /** Beats of count-in in front of the music, needed to find bar boundaries. */
+  private offsetBeats = 0
+  private queuedId: number | null = null
 
   get isPlaying(): boolean {
     return this.playing
@@ -82,6 +85,7 @@ export class Player {
     // loop; jumping into the middle of a bar sequence just resumes.
     const useCountIn = options.countIn && startBeat === loopStartBeat
     const offset = useCountIn ? COUNT_IN_BEATS : 0
+    this.offsetBeats = offset
 
     const musicEvents: NoteEvent[] = notes.map((note) => ({
       time: atBeat(note.time + offset),
@@ -124,9 +128,46 @@ export class Player {
   }
 
   stop(): void {
+    this.cancelQueued()
     const wasPlaying = this.playing
     this.teardown()
     if (wasPlaying) this.options?.onStop()
+  }
+
+  /**
+   * Run `callback` when the bar now playing finishes.
+   *
+   * Changing what plays the instant a button is pressed cuts the bar in half;
+   * a reader wants the phrase to land first. The transport fires ahead of time
+   * so the audio stays smooth, which is why the callback goes through Draw —
+   * that is what runs at the moment the listener actually hears the barline.
+   */
+  queueAtBarEnd(callback: () => void): void {
+    if (!this.playing) {
+      callback()
+      return
+    }
+    const transport = Tone.getTransport()
+    this.cancelQueued()
+    this.queuedId = transport.scheduleOnce((time) => {
+      this.queuedId = null
+      Tone.getDraw().schedule(callback, time)
+    }, `${this.nextBarBoundaryTicks()}i`)
+  }
+
+  cancelQueued(): void {
+    if (this.queuedId === null) return
+    Tone.getTransport().clear(this.queuedId)
+    this.queuedId = null
+  }
+
+  private nextBarBoundaryTicks(): number {
+    const transport = Tone.getTransport()
+    const ticksPerBar = BEATS_PER_BAR * transport.PPQ
+    const offsetTicks = this.offsetBeats * transport.PPQ
+    if (transport.ticks < offsetTicks) return offsetTicks
+    const barsDone = Math.floor((transport.ticks - offsetTicks) / ticksPerBar)
+    return offsetTicks + (barsDone + 1) * ticksPerBar
   }
 
   setBpm(bpm: number): void {
@@ -181,6 +222,7 @@ export class Player {
   }
 
   private teardown(): void {
+    this.queuedId = null
     const transport = Tone.getTransport()
     transport.stop()
     transport.cancel()
