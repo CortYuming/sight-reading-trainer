@@ -10,7 +10,13 @@ export interface PlayerOptions {
   countIn: boolean
   muteBass: boolean
   muteMelody: boolean
+  /** Bar to start from. */
+  startBar: number
+  /** Bar to loop on its own, or null to loop the whole exercise. */
+  loopBar: number | null
   onNote: (part: Part, barIndex: number, index: number) => void
+  /** Fires as each bar begins, for following the music on screen. */
+  onBar: (barIndex: number) => void
   onStop: () => void
 }
 
@@ -25,6 +31,13 @@ interface ClickEvent {
   time: string
   downbeat: boolean
 }
+
+interface BarEvent {
+  time: string
+  barIndex: number
+}
+
+const BEATS_PER_BAR = 4
 
 /** Tone takes tick counts written with an "i" suffix, and those follow tempo. */
 function atBeat(beats: number): string {
@@ -57,7 +70,18 @@ export class Player {
     this.buildInstruments()
 
     const { notes, beats } = scheduleExercise(exercise, options.swing)
-    const offset = options.countIn ? COUNT_IN_BEATS : 0
+
+    const loopStartBeat = options.loopBar === null ? 0 : options.loopBar * BEATS_PER_BAR
+    const loopEndBeat = options.loopBar === null ? beats : loopStartBeat + BEATS_PER_BAR
+    const startBeat = Math.min(
+      Math.max(options.startBar * BEATS_PER_BAR, loopStartBeat),
+      loopEndBeat - BEATS_PER_BAR,
+    )
+
+    // The count-in only makes sense when the music starts at the top of the
+    // loop; jumping into the middle of a bar sequence just resumes.
+    const useCountIn = options.countIn && startBeat === loopStartBeat
+    const offset = useCountIn ? COUNT_IN_BEATS : 0
 
     const musicEvents: NoteEvent[] = notes.map((note) => ({
       time: atBeat(note.time + offset),
@@ -66,6 +90,16 @@ export class Player {
     const music = new Tone.Part<NoteEvent>((time, event) => this.playNote(time, event.note), musicEvents)
     music.start(0)
     this.parts.push(music)
+
+    const barEvents: BarEvent[] = exercise.bars.map((_, barIndex) => ({
+      time: atBeat(offset + barIndex * BEATS_PER_BAR),
+      barIndex,
+    }))
+    const bars = new Tone.Part<BarEvent>((time, event) => {
+      Tone.getDraw().schedule(() => this.options?.onBar(event.barIndex), time)
+    }, barEvents)
+    bars.start(0)
+    this.parts.push(bars)
 
     const clickEvents: ClickEvent[] = []
     for (let beat = 0; beat < offset; beat++) {
@@ -81,10 +115,10 @@ export class Player {
     }
 
     transport.loop = true
-    transport.loopStart = atBeat(offset)
-    transport.loopEnd = atBeat(offset + beats)
+    transport.loopStart = atBeat(offset + loopStartBeat)
+    transport.loopEnd = atBeat(offset + loopEndBeat)
 
-    transport.position = 0
+    transport.position = useCountIn ? 0 : atBeat(offset + startBeat)
     transport.start()
     this.playing = true
   }

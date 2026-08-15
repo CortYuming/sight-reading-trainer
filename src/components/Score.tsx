@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import type { Exercise } from '../music/exercise'
 import { bassSpecs, melodySpecs } from '../notation/spec'
 import { useElementWidth } from '../hooks/useElementWidth'
@@ -18,14 +18,23 @@ export interface ActiveNote {
 
 interface ScoreProps {
   exercise: Exercise
+  currentBar: number
   activeBass: ActiveNote | null
   activeMelody: ActiveNote | null
+  onSelectBar: (bar: number) => void
 }
 
-export function Score({ exercise, activeBass, activeMelody }: ScoreProps) {
+export function Score({
+  exercise,
+  currentBar,
+  activeBass,
+  activeMelody,
+  onSelectBar,
+}: ScoreProps) {
   const [ref, width] = useElementWidth<HTMLDivElement>()
+  const rows = useRef<Array<HTMLDivElement | null>>([])
 
-  const rows = useMemo(
+  const bars = useMemo(
     () =>
       exercise.bars.map((bar) => ({
         chord: bar.chord.label,
@@ -35,19 +44,31 @@ export function Score({ exercise, activeBass, activeMelody }: ScoreProps) {
     [exercise],
   )
 
+  // Keep the bar being played in view, so nobody has to chase it by scrolling.
+  useEffect(() => {
+    rows.current[currentBar]?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [currentBar])
+
   const available = Math.max(width - COLUMN_GAP, MIN_BASS_WIDTH + MIN_MELODY_WIDTH)
   const bassWidth = Math.max(MIN_BASS_WIDTH, Math.floor(available * BASS_SHARE))
   const melodyWidth = Math.max(MIN_MELODY_WIDTH, available - bassWidth)
 
   return (
     <div className="score" ref={ref}>
-      {rows.map((row, i) => (
-        <div className="row" key={i}>
+      {bars.map((bar, i) => (
+        <div
+          className={`row${i === currentBar ? ' current' : ''}`}
+          key={i}
+          ref={(element) => {
+            rows.current[i] = element
+          }}
+          onClick={() => onSelectBar(i)}
+        >
           <div className="column">
             <div className="row-label">{i + 1}</div>
             {width > 0 && (
               <Measure
-                notes={row.bass}
+                notes={bar.bass}
                 keySignature={exercise.key.name}
                 showHeader={i === 0}
                 width={bassWidth}
@@ -56,10 +77,10 @@ export function Score({ exercise, activeBass, activeMelody }: ScoreProps) {
             )}
           </div>
           <div className="column melody">
-            <div className="row-label chord">{row.chord}</div>
+            <div className="row-label chord">{bar.chord}</div>
             {width > 0 && (
               <Measure
-                notes={row.melody}
+                notes={bar.melody}
                 keySignature={exercise.key.name}
                 showHeader={i === 0}
                 width={melodyWidth}
