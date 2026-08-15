@@ -1,25 +1,34 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Level } from './music/rhythm'
+import type { Theme } from './theme'
 import { generateExercise } from './music/exercise'
 import { PROGRESSIONS } from './music/progression'
 import { KEYS } from './music/pitch'
 import { Score } from './components/Score'
+import { THEMES, applyTheme, isTheme, loadTheme, saveTheme } from './theme'
 import './App.css'
 
 const LEVELS: Level[] = [1, 2, 3, 4]
 
+const THEME_LABELS: Record<Theme, string> = {
+  system: 'System',
+  light: 'Light',
+  dark: 'Dark',
+}
+
 const randomSeed = () => Math.floor(Math.random() * 1_000_000)
 
-/**
- * Phase 1 shell: the generator is real, the notation is not.
- * Staves arrive in phase 2 — until then the exercise is dumped as text so the
- * musical output can be checked by eye.
- */
 export default function App() {
   const [keyName, setKeyName] = useState('Bb')
-  const [progressionId, setProgressionId] = useState('ii-v-i')
+  const [progressionId, setProgressionId] = useState('blues')
   const [level, setLevel] = useState<Level>(2)
   const [seed, setSeed] = useState(randomSeed)
+  const [theme, setTheme] = useState<Theme>(() => loadTheme(localStorage))
+
+  useEffect(() => {
+    applyTheme(document.documentElement, theme)
+    saveTheme(localStorage, theme)
+  }, [theme])
 
   const exercise = useMemo(
     () => generateExercise({ keyName, progressionId, level, seed }),
@@ -59,6 +68,20 @@ export default function App() {
             {LEVELS.map((l) => (
               <option key={l} value={l}>
                 {l}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Theme
+          <select
+            value={theme}
+            onChange={(e) => setTheme(isTheme(e.target.value) ? e.target.value : 'system')}
+          >
+            {THEMES.map((t) => (
+              <option key={t} value={t}>
+                {THEME_LABELS[t]}
               </option>
             ))}
           </select>
