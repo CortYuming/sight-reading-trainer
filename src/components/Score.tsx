@@ -10,7 +10,19 @@ const COLUMN_GAP = 16
 const MIN_BASS_WIDTH = 96
 const MIN_MELODY_WIDTH = 150
 
-export function Score({ exercise }: { exercise: Exercise }) {
+/** Which note is sounding right now, if any. */
+export interface ActiveNote {
+  barIndex: number
+  index: number
+}
+
+interface ScoreProps {
+  exercise: Exercise
+  activeBass: ActiveNote | null
+  activeMelody: ActiveNote | null
+}
+
+export function Score({ exercise, activeBass, activeMelody }: ScoreProps) {
   const [ref, width] = useElementWidth<HTMLDivElement>()
 
   const rows = useMemo(
@@ -39,6 +51,7 @@ export function Score({ exercise }: { exercise: Exercise }) {
                 keySignature={exercise.key.name}
                 showHeader={i === 0}
                 width={bassWidth}
+                activeIndex={activeBass?.barIndex === i ? activeBass.index : null}
               />
             )}
           </div>
@@ -50,6 +63,7 @@ export function Score({ exercise }: { exercise: Exercise }) {
                 keySignature={exercise.key.name}
                 showHeader={i === 0}
                 width={melodyWidth}
+                activeIndex={activeMelody?.barIndex === i ? activeMelody.index : null}
               />
             )}
           </div>

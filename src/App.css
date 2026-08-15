@@ -31,9 +31,28 @@ h1 {
   padding: 0.3rem 0.5rem;
 }
 
-.seed {
+.controls .check {
+  gap: 0.25rem;
+}
+
+.controls input[type='range'] {
+  width: 8rem;
+}
+
+.controls .play {
+  min-width: 4.5rem;
+  font-weight: 600;
+}
+
+.seed,
+.bpm {
   font-size: 0.8rem;
   opacity: 0.6;
+}
+
+.bpm {
+  min-width: 2.2rem;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Score */
@@ -93,6 +112,20 @@ h1 {
 
 .measure svg [stroke]:not([stroke='none']) {
   stroke: var(--text);
+}
+
+/* The note that is sounding right now. */
+.measure svg g.note-active {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+
+.measure svg g.note-active [fill]:not([fill='none']) {
+  fill: var(--accent);
+}
+
+.measure svg g.note-active [stroke]:not([stroke='none']) {
+  stroke: var(--accent);
 }
 
 .note {
