@@ -9,16 +9,19 @@ export interface Progression {
   barsInC: string[]
 }
 
+/** Four bars is over too quickly to settle into, so the short forms go round twice. */
+const twice = (bars: string[]): string[] => [...bars, ...bars]
+
 export const PROGRESSIONS: Progression[] = [
   {
     id: 'ii-v-i',
     name: 'ii-V-I',
-    barsInC: ['Dm7', 'G7', 'Cmaj7', 'Cmaj7'],
+    barsInC: twice(['Dm7', 'G7', 'Cmaj7', 'Cmaj7']),
   },
   {
     id: 'turnaround',
     name: 'I-vi-ii-V',
-    barsInC: ['Cmaj7', 'Am7', 'Dm7', 'G7'],
+    barsInC: twice(['Cmaj7', 'Am7', 'Dm7', 'G7']),
   },
   {
     id: 'blues',
@@ -28,7 +31,7 @@ export const PROGRESSIONS: Progression[] = [
   {
     id: 'minor-ii-v',
     name: 'Minor ii-V-i',
-    barsInC: ['Dm7b5', 'G7', 'Cm6', 'Cm6'],
+    barsInC: twice(['Dm7b5', 'G7', 'Cm6', 'Cm6']),
   },
   {
     id: 'autumn',

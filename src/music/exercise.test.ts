@@ -35,7 +35,9 @@ describe('generateExercise', () => {
       level: 2,
       seed: 1,
     })
-    expect(exercise.bars.map((b) => b.chord.label)).toEqual(['Cm7', 'F7', 'Bbmaj7', 'Bbmaj7'])
+    // Four-bar forms go round twice.
+    const cycle = ['Cm7', 'F7', 'Bbmaj7', 'Bbmaj7']
+    expect(exercise.bars.map((b) => b.chord.label)).toEqual([...cycle, ...cycle])
   })
 
   it('spells sharp keys with sharps', () => {
@@ -45,7 +47,8 @@ describe('generateExercise', () => {
       level: 1,
       seed: 1,
     })
-    expect(exercise.bars.map((b) => b.chord.label)).toEqual(['Am7', 'D7', 'Gmaj7', 'Gmaj7'])
+    const cycle = ['Am7', 'D7', 'Gmaj7', 'Gmaj7']
+    expect(exercise.bars.map((b) => b.chord.label)).toEqual([...cycle, ...cycle])
   })
 
   it('returns the same exercise for the same seed, and a different one otherwise', () => {
