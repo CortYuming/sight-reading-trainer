@@ -1,36 +1,17 @@
+/*
+ * Light only, on purpose: a score is ink on paper, and a dark page makes the
+ * staff harder to read rather than easier.
+ */
 :root {
   --bg: #ffffff;
   --text: #1a1a1a;
   --border: #dcdcdc;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  color-scheme: light dark;
+  color-scheme: light;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.5;
-}
-
-/* Follow the system unless the reader has pinned a theme. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #16161a;
-    --text: #ececec;
-    --border: #3a3a42;
-  }
-}
-
-:root[data-theme='dark'] {
-  --bg: #16161a;
-  --text: #ececec;
-  --border: #3a3a42;
-  color-scheme: dark;
-}
-
-:root[data-theme='light'] {
-  --bg: #ffffff;
-  --text: #1a1a1a;
-  --border: #dcdcdc;
-  color-scheme: light;
 }
 
 * {
