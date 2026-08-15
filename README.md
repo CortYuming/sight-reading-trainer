@@ -18,7 +18,6 @@ repository does not exist, so nothing has been pushed.
 
 ## Remaining work
 
-- Remember the settings — key, form, level, tempo, swing — in localStorage.
 - Tighten the layout on a narrow phone. The two columns hold together down to
   about 320px, but nothing has been checked on a real handset.
 - Listen for whether the tail of a note is clipped at a barline when the bar
@@ -26,7 +25,7 @@ repository does not exist, so nothing has been pushed.
   rebuilding; worth a second listen before calling it done.
 - `gh repo create` and a GitHub Pages deploy. The workflow file still has to be
   copied over from chord-vamp, with `node-version: 22` to match the volta pin.
-- The bundle is 922kB (451kB gzipped), almost all of it the Bravura music font.
+- The bundle is 1.2MB (516kB gzipped), almost all of it the Bravura music font.
   Self-hosting the woff2 through `vexflow/core` would cut it, at the cost of a
   second request.
 
@@ -49,6 +48,9 @@ phone. There is no time signature — every exercise is in 4/4.
 - Swing has four depths. Measurements of jazz drummers put the ratio near 3.5:1
   at slow tempos and close to 1:1 above 250bpm, so the default is the deep end
   to match the slow default tempo.
+- Key, form, level, tempo, swing and the three switches are kept in the browser
+  and restored on the next visit. The exercise is not: coming back gives a new
+  one to read.
 
 ## How an exercise is built
 

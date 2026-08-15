@@ -7,6 +7,8 @@ import { KEYS } from './music/pitch'
 import { SWING_SETTINGS, swingRatio } from './audio/schedule'
 import { Player } from './audio/player'
 import { Score } from './components/Score'
+import { TEMPO_MAX, TEMPO_MIN, loadSettings, saveSettings } from './settings'
+import type { Settings } from './settings'
 import './App.css'
 
 const LEVELS: Level[] = [1, 2, 3, 4]
@@ -14,18 +16,20 @@ const LEVELS: Level[] = [1, 2, 3, 4]
 const randomSeed = () => Math.floor(Math.random() * 1_000_000)
 
 export default function App() {
-  const [keyName, setKeyName] = useState('Bb')
-  const [progressionId, setProgressionId] = useState('blues')
-  const [level, setLevel] = useState<Level>(2)
+  const savedRef = useRef<Settings | null>(null)
+  savedRef.current ??= loadSettings()
+  const saved = savedRef.current
+
+  const [keyName, setKeyName] = useState(saved.keyName)
+  const [progressionId, setProgressionId] = useState(saved.progressionId)
+  const [level, setLevel] = useState<Level>(saved.level)
   const [seed, setSeed] = useState(randomSeed)
 
-  const [bpm, setBpm] = useState(60)
-  // Deep by default: at the slow tempo this page starts at, that is the ratio
-  // jazz players actually land on.
-  const [swing, setSwing] = useState<SwingId>('deep')
-  const [countIn, setCountIn] = useState(true)
-  const [playBass, setPlayBass] = useState(true)
-  const [playMelody, setPlayMelody] = useState(true)
+  const [bpm, setBpm] = useState(saved.bpm)
+  const [swing, setSwing] = useState<SwingId>(saved.swing)
+  const [countIn, setCountIn] = useState(saved.countIn)
+  const [playBass, setPlayBass] = useState(saved.playBass)
+  const [playMelody, setPlayMelody] = useState(saved.playMelody)
 
   const [playing, setPlaying] = useState(false)
   const [currentBar, setCurrentBar] = useState(0)
@@ -177,6 +181,10 @@ export default function App() {
 
   useEffect(() => () => player.stop(), [player])
 
+  useEffect(() => {
+    saveSettings({ keyName, progressionId, level, bpm, swing, countIn, playBass, playMelody })
+  }, [keyName, progressionId, level, bpm, swing, countIn, playBass, playMelody])
+
   return (
     <div className="page">
       <header className="toolbar">
@@ -189,8 +197,8 @@ export default function App() {
             <span className="field-label">Tempo</span>
             <input
               type="range"
-              min={40}
-              max={240}
+              min={TEMPO_MIN}
+              max={TEMPO_MAX}
               value={bpm}
               aria-label="Tempo"
               onChange={(e) => setBpm(Number(e.target.value))}
