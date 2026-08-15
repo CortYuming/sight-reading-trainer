@@ -8,7 +8,6 @@ export interface PlayerOptions {
   /** Where the off-beat eighth lands: 0.5 straight, 2/3 fully swung. */
   swing: number
   countIn: boolean
-  metronome: boolean
   muteBass: boolean
   muteMelody: boolean
   onNote: (part: Part, barIndex: number, index: number) => void
@@ -24,8 +23,6 @@ interface NoteEvent {
 
 interface ClickEvent {
   time: string
-  /** Count-in clicks always sound; the rest follow the metronome setting. */
-  countIn: boolean
   downbeat: boolean
 }
 
@@ -72,14 +69,16 @@ export class Player {
 
     const clickEvents: ClickEvent[] = []
     for (let beat = 0; beat < offset; beat++) {
-      clickEvents.push({ time: atBeat(beat), countIn: true, downbeat: beat === 0 })
+      clickEvents.push({ time: atBeat(beat), downbeat: beat === 0 })
     }
-    for (let beat = 0; beat < beats; beat++) {
-      clickEvents.push({ time: atBeat(offset + beat), countIn: false, downbeat: beat % 4 === 0 })
+    if (clickEvents.length > 0) {
+      const clicks = new Tone.Part<ClickEvent>(
+        (time, event) => this.playClick(time, event),
+        clickEvents,
+      )
+      clicks.start(0)
+      this.parts.push(clicks)
     }
-    const clicks = new Tone.Part<ClickEvent>((time, event) => this.playClick(time, event), clickEvents)
-    clicks.start(0)
-    this.parts.push(clicks)
 
     transport.loop = true
     transport.loopStart = atBeat(offset)
@@ -99,10 +98,6 @@ export class Player {
   setBpm(bpm: number): void {
     if (this.options) this.options.bpm = bpm
     Tone.getTransport().bpm.value = bpm
-  }
-
-  setMetronome(on: boolean): void {
-    if (this.options) this.options.metronome = on
   }
 
   setMutes(muteBass: boolean, muteMelody: boolean): void {
@@ -126,7 +121,6 @@ export class Player {
   }
 
   private playClick(time: number, event: ClickEvent): void {
-    if (!event.countIn && !this.options?.metronome) return
     this.click?.triggerAttackRelease('32n', time, event.downbeat ? 1 : 0.5)
   }
 

@@ -25,7 +25,6 @@ export default function App() {
   // jazz players actually land on.
   const [swing, setSwing] = useState<SwingId>('deep')
   const [countIn, setCountIn] = useState(true)
-  const [metronome, setMetronome] = useState(false)
   const [playBass, setPlayBass] = useState(true)
   const [playMelody, setPlayMelody] = useState(true)
 
@@ -52,7 +51,6 @@ export default function App() {
       bpm,
       swing: swingRatio(swing),
       countIn,
-      metronome,
       muteBass: !playBass,
       muteMelody: !playMelody,
       onNote: (part, barIndex, index) => {
@@ -72,7 +70,6 @@ export default function App() {
     bpm,
     swing,
     countIn,
-    metronome,
     playBass,
     playMelody,
     clearHighlight,
@@ -84,9 +81,8 @@ export default function App() {
     clearHighlight()
   }, [player, clearHighlight])
 
-  // Tempo, metronome and mutes take effect without interrupting playback.
+  // Tempo and mutes take effect without interrupting playback.
   useEffect(() => player.setBpm(bpm), [player, bpm])
-  useEffect(() => player.setMetronome(metronome), [player, metronome])
   useEffect(() => player.setMutes(!playBass, !playMelody), [player, playBass, playMelody])
 
   // These change how the whole thing is scheduled, so they need a restart.
@@ -176,14 +172,6 @@ export default function App() {
           Count-in
         </label>
 
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={metronome}
-            onChange={(e) => setMetronome(e.target.checked)}
-          />
-          Metronome
-        </label>
 
         <label className="check">
           <input

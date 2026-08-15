@@ -4,9 +4,14 @@
  */
 :root {
   --bg: #ffffff;
+  --surface: #ffffff;
+  --toolbar-bg: #f6f6f4;
   --text: #1a1a1a;
-  --border: #dcdcdc;
+  --muted: #6b6b70;
+  --border: #d8d8d4;
+  --border-strong: #b9b9b3;
   --accent: #c2410c;
+  --accent-soft: #fdece3;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   color-scheme: light;
