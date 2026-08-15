@@ -21,7 +21,9 @@ export default function App() {
   const [seed, setSeed] = useState(randomSeed)
 
   const [bpm, setBpm] = useState(60)
-  const [swing, setSwing] = useState<SwingId>('medium')
+  // Deep by default: at the slow tempo this page starts at, that is the ratio
+  // jazz players actually land on.
+  const [swing, setSwing] = useState<SwingId>('deep')
   const [countIn, setCountIn] = useState(true)
   const [metronome, setMetronome] = useState(false)
   const [playBass, setPlayBass] = useState(true)
