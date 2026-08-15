@@ -48,12 +48,14 @@ export default function App() {
     setActiveMelody(null)
   }, [])
 
+  // Only an explicit Play counts in. Stepping between bars or turning on the
+  // bar repeat should carry straight on from where the reader is looking.
   const play = useCallback(
-    async (startBar: number, loopBar: number | null) => {
+    async (startBar: number, loopBar: number | null, withCountIn = false) => {
       await player.start(exercise, {
         bpm,
         swing: swingRatio(swing),
-        countIn,
+        countIn: withCountIn,
         muteBass: !playBass,
         muteMelody: !playMelody,
         startBar,
@@ -71,7 +73,7 @@ export default function App() {
       })
       setPlaying(true)
     },
-    [player, exercise, bpm, swing, countIn, playBass, playMelody, clearHighlight],
+    [player, exercise, bpm, swing, playBass, playMelody, clearHighlight],
   )
 
   const stop = useCallback(() => {
@@ -99,8 +101,8 @@ export default function App() {
 
   const toggle = useCallback(() => {
     if (playing) stop()
-    else void play(currentBar, barRepeat ? currentBar : null)
-  }, [playing, stop, play, currentBar, barRepeat])
+    else void play(currentBar, barRepeat ? currentBar : null, countIn)
+  }, [playing, stop, play, currentBar, barRepeat, countIn])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -139,7 +141,7 @@ export default function App() {
     if (!player.isPlaying) return
     void play(currentBar, barRepeat ? currentBar : null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [swing, countIn, exercise])
+  }, [swing, exercise])
 
   useEffect(() => {
     setCurrentBar(0)
