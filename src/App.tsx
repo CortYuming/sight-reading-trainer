@@ -97,14 +97,14 @@ export default function App() {
       setPending({ bar, repeat })
       player.queueAtBarEnd(() => {
         setPending(null)
-        void play(bar, repeat ? bar : null)
+        player.moveTo(bar, repeat ? bar : null)
       })
     },
-    [player, play],
+    [player],
   )
 
-  // Navigation restarts playback at the new bar. A rebuild is cheap, and it
-  // keeps one code path for "where does the music start and what loops".
+  // While playing, a move seeks the running transport; stopped, it only marks
+  // where Play will start from.
   const goToBar = useCallback(
     (bar: number) => {
       const from = pending?.bar ?? currentBar

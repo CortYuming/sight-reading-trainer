@@ -54,6 +54,7 @@ export class Player {
   private playing = false
   /** Beats of count-in in front of the music, needed to find bar boundaries. */
   private offsetBeats = 0
+  private totalBeats = 0
   private queuedId: number | null = null
 
   get isPlaying(): boolean {
@@ -86,6 +87,7 @@ export class Player {
     const useCountIn = options.countIn && startBeat === loopStartBeat
     const offset = useCountIn ? COUNT_IN_BEATS : 0
     this.offsetBeats = offset
+    this.totalBeats = beats
 
     const musicEvents: NoteEvent[] = notes.map((note) => ({
       time: atBeat(note.time + offset),
@@ -156,6 +158,35 @@ export class Player {
       this.queuedId = null
       Tone.getDraw().schedule(callback, time)
     }, `${boundary}i`)
+  }
+
+  /**
+   * Jump to a bar and set what loops, without rebuilding anything.
+   *
+   * Seeking the transport makes Tone reschedule the parts around the new
+   * position, so the music keeps running: tearing the player down and building
+   * it again left an audible hole at every move.
+   */
+  moveTo(startBar: number, loopBar: number | null): void {
+    if (!this.playing) return
+    const transport = Tone.getTransport()
+    const ticksPerBar = BEATS_PER_BAR * transport.PPQ
+    const offsetTicks = this.offsetBeats * transport.PPQ
+
+    const loopStart = offsetTicks + (loopBar === null ? 0 : loopBar * ticksPerBar)
+    const loopEnd =
+      loopBar === null
+        ? offsetTicks + this.totalBeats * transport.PPQ
+        : loopStart + ticksPerBar
+
+    transport.loopStart = `${loopStart}i`
+    transport.loopEnd = `${loopEnd}i`
+    transport.ticks = offsetTicks + startBar * ticksPerBar
+
+    if (this.options) {
+      this.options.startBar = startBar
+      this.options.loopBar = loopBar
+    }
   }
 
   cancelQueued(): void {
