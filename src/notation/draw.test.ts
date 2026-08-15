@@ -5,7 +5,8 @@ import { generateExercise } from '../music/exercise'
 import { KEYS } from '../music/pitch'
 import { PROGRESSIONS } from '../music/progression'
 import { bassSpecs, melodySpecs } from './spec'
-import { drawMeasure } from './draw'
+import type { NoteSpec } from './spec'
+import { MEASURE_HEIGHT, drawMeasure } from './draw'
 
 const LEVELS: Level[] = [1, 2, 3, 4]
 
@@ -70,6 +71,55 @@ describe('drawMeasure', () => {
       expect(tiesDrawn).toBeGreaterThan(0)
     },
   )
+
+  it('keeps the extremes of both ranges inside the drawing', () => {
+    const bar = (key: string): NoteSpec[] =>
+      Array.from({ length: 4 }, () => ({
+        key,
+        duration: 'q' as const,
+        dots: 0,
+        rest: false,
+        tieToNext: false,
+      }))
+
+    for (const key of ['e/3', 'b/5']) {
+      const container = document.createElement('div')
+      const bounds = drawMeasure(container, {
+        notes: bar(key),
+        keySignature: 'C',
+        width: 400,
+        showHeader: true,
+      })
+      expect(`${key} top: ${bounds.top >= 0}`).toBe(`${key} top: true`)
+      expect(`${key} bottom: ${bounds.bottom <= MEASURE_HEIGHT}`).toBe(`${key} bottom: true`)
+    }
+  })
+
+  it('never draws outside the measure height', { timeout: 60_000 }, () => {
+    for (const key of KEYS) {
+      for (const level of LEVELS) {
+        const exercise = generateExercise({
+          keyName: key.name,
+          progressionId: 'autumn',
+          level,
+          seed: 808,
+        })
+        exercise.bars.forEach((bar, i) => {
+          for (const notes of [bassSpecs(bar), melodySpecs(bar)]) {
+            const container = document.createElement('div')
+            const bounds = drawMeasure(container, {
+              notes,
+              keySignature: key.name,
+              width: 400,
+              showHeader: i === 0,
+            })
+            expect(bounds.top).toBeGreaterThanOrEqual(0)
+            expect(bounds.bottom).toBeLessThanOrEqual(MEASURE_HEIGHT)
+          }
+        })
+      }
+    }
+  })
 
   it('replaces the previous drawing instead of stacking SVGs', () => {
     const exercise = generateExercise({ keyName: 'F', progressionId: 'blues', level: 2, seed: 9 })

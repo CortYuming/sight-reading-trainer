@@ -15,11 +15,14 @@ import {
 } from 'vexflow/bravura'
 import type { NoteSpec } from './spec'
 
-/** Room above the staff for high notes, their stems and tuplet brackets. */
-export const STAVE_TOP = 42
+/**
+ * Where the stave is asked to start. VexFlow adds its own space above the
+ * first line, so the staff itself lands about 40px below this.
+ */
+export const STAVE_TOP = 4
 
 /** Enough room below the staff for the three ledger lines of a low E. */
-export const MEASURE_HEIGHT = 140
+export const MEASURE_HEIGHT = 132
 
 export interface MeasureOptions {
   notes: NoteSpec[]
@@ -27,16 +30,22 @@ export interface MeasureOptions {
   keySignature: string
   width: number
   /**
-   * Clef, key and time signature are drawn on the first row only. Repeating
-   * them on every row would eat most of the width on a phone.
+   * Clef and key signature are drawn on the first row only. Repeating them on
+   * every row would eat most of the width on a phone.
    */
   showHeader: boolean
+}
+
+/** Vertical extent of everything drawn, used to check nothing is clipped. */
+export interface MeasureBounds {
+  top: number
+  bottom: number
 }
 
 /**
  * Draw one bar of 4/4 into `container`, replacing whatever was there before.
  */
-export function drawMeasure(container: HTMLElement, options: MeasureOptions): void {
+export function drawMeasure(container: HTMLElement, options: MeasureOptions): MeasureBounds {
   container.replaceChildren()
 
   const renderer = new Renderer(container as HTMLDivElement, Renderer.Backends.SVG)
@@ -47,7 +56,6 @@ export function drawMeasure(container: HTMLElement, options: MeasureOptions): vo
   if (options.showHeader) {
     stave.addClef('treble', 'default', '8vb')
     stave.addKeySignature(options.keySignature)
-    stave.addTimeSignature('4/4')
   }
   stave.setContext(context).draw()
 
@@ -72,6 +80,24 @@ export function drawMeasure(container: HTMLElement, options: MeasureOptions): vo
   for (const beam of beams) beam.setContext(context).draw()
   for (const tuplet of tuplets) tuplet.setContext(context).draw()
   for (const tie of buildTies(options.notes, notes)) tie.setContext(context).draw()
+
+  return measureBounds(stave, notes)
+}
+
+/**
+ * How far the drawing actually reaches. Low notes hang below the staff on
+ * ledger lines and can run off the bottom of the SVG, which is easy to miss
+ * without measuring.
+ */
+function measureBounds(stave: Stave, notes: StaveNote[]): MeasureBounds {
+  let top = stave.getYForLine(0)
+  let bottom = stave.getYForLine(4)
+  for (const note of notes) {
+    const box = note.getBoundingBox()
+    top = Math.min(top, box.getY())
+    bottom = Math.max(bottom, box.getY() + box.getH())
+  }
+  return { top, bottom }
 }
 
 function toStaveNote(spec: NoteSpec): StaveNote {
