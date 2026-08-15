@@ -1,11 +1,9 @@
 import * as Tone from 'tone'
 import type { Exercise } from '../music/exercise'
 import type { Part, ScheduledNote } from './schedule'
+import type { BassVoice, Instrument, MelodyVoice } from './instruments'
+import { createBass, createMelody } from './instruments'
 import { scheduleExercise } from './schedule'
-
-export type Timbre = 'synth' | 'upright'
-
-export const TIMBRES: Timbre[] = ['synth', 'upright']
 
 export interface PlayerOptions {
   bpm: number
@@ -15,7 +13,8 @@ export interface PlayerOptions {
   metronome: boolean
   muteBass: boolean
   muteMelody: boolean
-  timbre: Timbre
+  bassVoice: BassVoice
+  melodyVoice: MelodyVoice
   onNote: (part: Part, barIndex: number, index: number) => void
   onStop: () => void
 }
@@ -41,8 +40,8 @@ function atBeat(beats: number): string {
 
 export class Player {
   private parts: Tone.Part[] = []
-  private bass: Tone.Synth | Tone.MonoSynth | null = null
-  private melody: Tone.Synth | Tone.PluckSynth | null = null
+  private bass: Instrument | null = null
+  private melody: Instrument | null = null
   private click: Tone.NoiseSynth | null = null
   private clickFilter: Tone.Filter | null = null
   private options: PlayerOptions | null = null
@@ -62,7 +61,7 @@ export class Player {
     // Swing is baked into the schedule, so the transport must not add its own.
     transport.swing = 0
 
-    this.buildInstruments(options.timbre)
+    this.buildInstruments(options.bassVoice, options.melodyVoice)
 
     const { notes, beats } = scheduleExercise(exercise, options.swing)
     const offset = options.countIn ? COUNT_IN_BEATS : 0
@@ -135,39 +134,9 @@ export class Player {
     this.click?.triggerAttackRelease('32n', time, event.downbeat ? 1 : 0.5)
   }
 
-  private buildInstruments(timbre: Timbre): void {
-    if (timbre === 'upright') {
-      this.bass = new Tone.MonoSynth({
-        oscillator: { type: 'sine' },
-        envelope: { attack: 0.01, decay: 0.4, sustain: 0, release: 0.2 },
-        filterEnvelope: {
-          attack: 0.005,
-          decay: 0.15,
-          sustain: 0,
-          release: 0.2,
-          baseFrequency: 100,
-          octaves: 2.5,
-        },
-        volume: -2,
-      }).toDestination()
-      this.melody = new Tone.PluckSynth({
-        attackNoise: 1,
-        dampening: 3200,
-        resonance: 0.92,
-        volume: -4,
-      }).toDestination()
-    } else {
-      this.bass = new Tone.Synth({
-        oscillator: { type: 'sine' },
-        envelope: { attack: 0.005, decay: 0.25, sustain: 0.2, release: 0.3 },
-        volume: -4,
-      }).toDestination()
-      this.melody = new Tone.Synth({
-        oscillator: { type: 'triangle' },
-        envelope: { attack: 0.004, decay: 0.2, sustain: 0.25, release: 0.25 },
-        volume: -8,
-      }).toDestination()
-    }
+  private buildInstruments(bassVoice: BassVoice, melodyVoice: MelodyVoice): void {
+    this.bass = createBass(bassVoice)
+    this.melody = createMelody(melodyVoice)
 
     this.clickFilter = new Tone.Filter({ frequency: 4000, type: 'highpass' }).toDestination()
     this.click = new Tone.NoiseSynth({

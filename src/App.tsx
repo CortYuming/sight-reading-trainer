@@ -1,21 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Level } from './music/rhythm'
 import type { ActiveNote } from './components/Score'
-import type { Timbre } from './audio/player'
+import type { BassVoice, MelodyVoice } from './audio/instruments'
 import { generateExercise } from './music/exercise'
 import { PROGRESSIONS } from './music/progression'
 import { KEYS } from './music/pitch'
 import { FULL_SWING, STRAIGHT } from './audio/schedule'
+import { BASS_VOICES, MELODY_VOICES } from './audio/instruments'
 import { Player } from './audio/player'
 import { Score } from './components/Score'
 import './App.css'
 
 const LEVELS: Level[] = [1, 2, 3, 4]
-
-const TIMBRE_LABELS: Record<Timbre, string> = {
-  synth: 'Synth',
-  upright: 'Upright bass',
-}
 
 const randomSeed = () => Math.floor(Math.random() * 1_000_000)
 
@@ -25,13 +21,14 @@ export default function App() {
   const [level, setLevel] = useState<Level>(2)
   const [seed, setSeed] = useState(randomSeed)
 
-  const [bpm, setBpm] = useState(120)
+  const [bpm, setBpm] = useState(60)
   const [swing, setSwing] = useState(true)
   const [countIn, setCountIn] = useState(true)
-  const [metronome, setMetronome] = useState(true)
+  const [metronome, setMetronome] = useState(false)
   const [playBass, setPlayBass] = useState(true)
   const [playMelody, setPlayMelody] = useState(true)
-  const [timbre, setTimbre] = useState<Timbre>('synth')
+  const [bassVoice, setBassVoice] = useState<BassVoice>('synth')
+  const [melodyVoice, setMelodyVoice] = useState<MelodyVoice>('synth')
 
   const [playing, setPlaying] = useState(false)
   const [activeBass, setActiveBass] = useState<ActiveNote | null>(null)
@@ -59,7 +56,8 @@ export default function App() {
       metronome,
       muteBass: !playBass,
       muteMelody: !playMelody,
-      timbre,
+      bassVoice,
+      melodyVoice,
       onNote: (part, barIndex, index) => {
         const note = { barIndex, index }
         if (part === 'bass') setActiveBass(note)
@@ -80,7 +78,8 @@ export default function App() {
     metronome,
     playBass,
     playMelody,
-    timbre,
+    bassVoice,
+    melodyVoice,
     clearHighlight,
   ])
 
@@ -100,7 +99,7 @@ export default function App() {
     if (!player.isPlaying) return
     void play()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [swing, countIn, timbre, exercise])
+  }, [swing, countIn, bassVoice, melodyVoice, exercise])
 
   useEffect(() => () => player.stop(), [player])
 
@@ -167,11 +166,25 @@ export default function App() {
         </label>
 
         <label>
-          Sound
-          <select value={timbre} onChange={(e) => setTimbre(e.target.value as Timbre)}>
-            {(Object.keys(TIMBRE_LABELS) as Timbre[]).map((t) => (
-              <option key={t} value={t}>
-                {TIMBRE_LABELS[t]}
+          Bass sound
+          <select value={bassVoice} onChange={(e) => setBassVoice(e.target.value as BassVoice)}>
+            {BASS_VOICES.map((voice) => (
+              <option key={voice.id} value={voice.id}>
+                {voice.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Melody sound
+          <select
+            value={melodyVoice}
+            onChange={(e) => setMelodyVoice(e.target.value as MelodyVoice)}
+          >
+            {MELODY_VOICES.map((voice) => (
+              <option key={voice.id} value={voice.id}>
+                {voice.label}
               </option>
             ))}
           </select>
