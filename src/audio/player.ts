@@ -17,7 +17,8 @@ export interface PlayerOptions {
   onNote: (part: Part, barIndex: number, index: number) => void
   /** Fires as each bar begins, for following the music on screen. */
   onBar: (barIndex: number) => void
-  onStop: () => void
+  /** Fires when playback ends, with the bar it was on so Play can resume there. */
+  onStop: (barIndex: number) => void
 }
 
 const COUNT_IN_BEATS = 4
@@ -132,8 +133,23 @@ export class Player {
   stop(): void {
     this.cancelQueued()
     const wasPlaying = this.playing
+    // Read the bar off the transport before tearing it down. Following the
+    // bars on screen goes through Draw, which lags and can be skipped, and
+    // Play would then start over from wherever the screen had got to.
+    const bar = wasPlaying ? this.currentBar() : 0
     this.teardown()
-    if (wasPlaying) this.options?.onStop()
+    if (wasPlaying) this.options?.onStop(bar)
+  }
+
+  /** The bar the transport is in now, counted past any count-in. */
+  private currentBar(): number {
+    const transport = Tone.getTransport()
+    const ticksPerBar = BEATS_PER_BAR * transport.PPQ
+    const offsetTicks = this.offsetBeats * transport.PPQ
+    const played = transport.ticks - offsetTicks
+    if (played <= 0) return 0
+    const bars = Math.floor(played / ticksPerBar)
+    return Math.min(bars, Math.floor(this.totalBeats / BEATS_PER_BAR) - 1)
   }
 
   /**

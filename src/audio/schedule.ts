@@ -68,8 +68,30 @@ export function swingTicks(ticks: number, ratio: number): number {
   return beat * TICKS_PER_BEAT + ratio * TICKS_PER_BEAT
 }
 
-function beatsAt(ticks: number, ratio: number): number {
-  return swingTicks(ticks, ratio) / TICKS_PER_BEAT
+/**
+ * Which half-beats actually carry an off-beat eighth.
+ *
+ * Only those move. A beat filled with sixteenths has a note sitting on the
+ * half-beat too, and swinging that one would shove it into the sixteenth that
+ * follows — four even notes would come out as three.
+ */
+function swungTicks(exercise: Exercise): Set<number> {
+  const half = TICKS_PER_BEAT / 2
+  const positions = new Set<number>()
+  exercise.bars.forEach((bar, barIndex) => {
+    const barStart = barIndex * TICKS_PER_BAR
+    for (const event of bar.melody) {
+      if (event.tuplet) continue
+      if (event.ticks !== half) continue
+      if (event.start % TICKS_PER_BEAT !== half) continue
+      positions.add(barStart + event.start)
+    }
+  })
+  return positions
+}
+
+function beatsAt(ticks: number, ratio: number, swung: Set<number>): number {
+  return (swung.has(ticks) ? swingTicks(ticks, ratio) : ticks) / TICKS_PER_BEAT
 }
 
 /**
@@ -79,6 +101,7 @@ function beatsAt(ticks: number, ratio: number): number {
  */
 export function scheduleExercise(exercise: Exercise, swing: number): Schedule {
   const notes: ScheduledNote[] = []
+  const swung = swungTicks(exercise)
 
   exercise.bars.forEach((bar, barIndex) => {
     const barStart = barIndex * TICKS_PER_BAR
@@ -106,8 +129,8 @@ export function scheduleExercise(exercise: Exercise, swing: number): Schedule {
       let last = i
       while (events[last].tie && last + 1 < events.length) last++
 
-      const start = beatsAt(barStart + event.start, swing)
-      const end = beatsAt(barStart + events[last].start + events[last].ticks, swing)
+      const start = beatsAt(barStart + event.start, swing, swung)
+      const end = beatsAt(barStart + events[last].start + events[last].ticks, swing, swung)
       notes.push({
         time: start,
         duration: Math.max((end - start) * ARTICULATION, 0.05),

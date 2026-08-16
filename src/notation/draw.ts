@@ -114,14 +114,24 @@ function toStaveNote(spec: NoteSpec): StaveNote {
 }
 
 function buildTuplets(specs: NoteSpec[], notes: StaveNote[]): Tuplet[] {
-  const groups = new Map<number, StaveNote[]>()
+  // The ratio has to be passed: VexFlow would otherwise read it off the group
+  // size, which is wrong for a sextuplet and for a triplet written as two
+  // notes.
+  const groups = new Map<number, { notes: StaveNote[]; numNotes: number; notesOccupied: number }>()
   specs.forEach((spec, i) => {
-    if (spec.triplet === undefined) return
-    const group = groups.get(spec.triplet) ?? []
-    group.push(notes[i])
-    groups.set(spec.triplet, group)
+    if (!spec.tuplet) return
+    const { group, numNotes, notesOccupied } = spec.tuplet
+    const found = groups.get(group) ?? { notes: [], numNotes, notesOccupied }
+    found.notes.push(notes[i])
+    groups.set(group, found)
   })
-  return [...groups.values()].map((group) => new Tuplet(group))
+  return [...groups.values()].map(
+    (group) =>
+      new Tuplet(group.notes, {
+        numNotes: group.numNotes,
+        notesOccupied: group.notesOccupied,
+      }),
+  )
 }
 
 function buildTies(specs: NoteSpec[], notes: StaveNote[]): StaveTie[] {

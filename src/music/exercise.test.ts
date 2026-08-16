@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import type { Level } from './rhythm'
 import { generateExercise } from './exercise'
 import { PROGRESSIONS } from './progression'
 import { KEYS } from './pitch'
-import { TICKS_PER_BAR, totalTicks } from './rhythm'
+import { LEVELS, TICKS_PER_BAR, totalTicks } from './rhythm'
 
-const LEVELS: Level[] = [1, 2, 3, 4]
 
 describe('generateExercise', () => {
   it('builds every combination of key, progression and level', () => {

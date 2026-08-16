@@ -1,12 +1,33 @@
 import { describe, expect, it } from 'vitest'
-import type { Level } from '../music/rhythm'
+import { LEVELS } from '../music/rhythm'
 import { generateExercise } from '../music/exercise'
 import { KEYS } from '../music/pitch'
 import { PROGRESSIONS } from '../music/progression'
 import { SOUNDING_OFFSET } from '../music/pitch'
 import { FULL_SWING, STRAIGHT, scheduleExercise, swingTicks } from './schedule'
 
-const LEVELS: Level[] = [1, 2, 3, 4]
+
+describe('sixteenths under swing', () => {
+  it('keeps four sixteenths evenly spaced', () => {
+    // Level 1 is the only pool with a bar of plain sixteenths, and swinging
+    // the note on the half-beat would drop it onto the one after it.
+    const exercise = generateExercise({
+      keyName: 'Bb',
+      progressionId: 'blues',
+      level: 1,
+      seed: 11,
+    })
+    const bar = exercise.bars.findIndex((b) => b.melody.length === 16)
+    expect(bar).toBeGreaterThanOrEqual(0)
+    const times = scheduleExercise(exercise, 0.75)
+      .notes.filter((n) => n.part === 'melody' && n.barIndex === bar)
+      .map((n) => n.time)
+    expect(times).toHaveLength(16)
+    for (let i = 1; i < times.length; i++) {
+      expect(times[i] - times[i - 1]).toBeCloseTo(0.25)
+    }
+  })
+})
 
 describe('swingTicks', () => {
   it('leaves everything alone when straight', () => {

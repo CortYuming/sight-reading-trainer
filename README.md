@@ -59,13 +59,42 @@ phone. There is no time signature — every exercise is in 4/4.
 - The **bass** walks in quarter notes: the root on beat 1, chord tones on beats
   2-3, and a chromatic or dominant approach into the next bar on beat 4.
   Range: written E3-E4, i.e. strings 6-4.
-- The **melody** takes the rhythm for each beat from a pool that grows with the
-  difficulty level, then borrows pitches from the chord and its scale — chord
-  tones on the beat, stepwise motion in between. Range: written G4-B5, i.e.
-  strings 3-1.
-- Levels: 1 quarters and eighths, 2 adds rests and ties, 3 adds sixteenths,
-  4 adds triplets. Level 1 repeats one rhythm across all four beats of a bar,
-  so the reading is all in the pitches.
+- The **melody** draws one beat-long rhythm per bar and repeats it across all
+  four beats, then borrows pitches from the chord and its scale — chord tones
+  on the beat, stepwise motion in between. Range: written G4-B5, i.e. strings
+  3-1. A bar therefore carries a single rhythm, and the reading is in the
+  pitches.
+- Levels climb in pairs. An odd level opens a set of rest-free shapes and the
+  even level above answers them with the same shapes carrying a rest, so a
+  rhythm is always met plain before it is met broken up:
+
+  | Level | Added |
+  |---|---|
+  | 1 | two eighths, four sixteenths, dotted eighth + sixteenth, its reverse |
+  | 2 | the level 1 shapes with a rest |
+  | 3 | sixteenths beside an eighth, three ways, then the eighth triplet |
+  | 4 | the level 3 shapes with a rest |
+  | 5 | the triplet written as two notes, both ways, and the sextuplet |
+  | 6 | the level 5 shapes with a rest |
+
+  A level brings only its own shapes. Carrying the earlier ones along would
+  just repeat the levels below, and going back a level is the way to practise
+  those. Pool sizes: 4, 6, 4, 6, 3, 3.
+
+  A plain quarter is not in the pool: repeated across a bar it would spell the
+  four beats the bass already walks, which is nothing to read.
+- Through the basics the bars climb: the first two thirds of a page walk up the
+  pool from its easiest shape to its hardest, and the last third is drawn at
+  random from everything met.
+- Levels 7-10 mix what the basics taught, with the four beats drawn one at a
+  time instead of repeating, so a bar can change shape from beat to beat:
+
+  | Level | Pool |
+  |---|---|
+  | 7 | every rest-free shape |
+  | 8 | every shape with a rest |
+  | 9 | all of them |
+  | 10 | all of them, and ties across the beat |
 
 All pitches are **written** pitches. Guitar notation sounds one octave lower
 than written.

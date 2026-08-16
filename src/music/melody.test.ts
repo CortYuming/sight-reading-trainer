@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Level } from './rhythm'
+import type { BarEvent, Level } from './rhythm'
 import { generateMelody } from './melody'
 import { generateBarRhythm, TICKS_PER_BEAT } from './rhythm'
 import { buildProgression, PROGRESSIONS } from './progression'
@@ -43,19 +43,30 @@ describe('generateMelody', () => {
     }
   })
 
+  // The generator no longer writes ties, but the melody still honours them,
+  // so the rhythm is handed in by hand here.
   it('holds the same pitch across a tie', () => {
+    const key = KEYS[0]
+    const chords = buildProgression(PROGRESSIONS[0], key.root, key.prefer)
+    const tied: BarEvent[] = [
+      { dur: '8', dots: 0, ticks: 6, rest: false, start: 0, tie: false },
+      { dur: '8', dots: 0, ticks: 6, rest: false, start: 6, tie: true },
+      { dur: '8', dots: 0, ticks: 6, rest: false, start: 12, tie: false },
+      { dur: '8', dots: 0, ticks: 6, rest: false, start: 18, tie: false },
+      { dur: 'q', dots: 0, ticks: 12, rest: false, start: 24, tie: false },
+      { dur: 'q', dots: 0, ticks: 12, rest: false, start: 36, tie: false },
+    ]
+    const rhythms = chords.map(() => tied.map((event) => ({ ...event })))
+    const melody = generateMelody(rhythms, chords, createRng(7))
     let tiesSeen = 0
-    for (const seed of SEEDS) {
-      const { melody } = build(4, seed)
-      for (const bar of melody) {
-        bar.forEach((event, i) => {
-          if (!event.tie) return
-          tiesSeen++
-          expect(bar[i + 1].midi).toBe(event.midi)
-        })
-      }
+    for (const bar of melody) {
+      bar.forEach((event, i) => {
+        if (!event.tie) return
+        tiesSeen++
+        expect(bar[i + 1].midi).toBe(event.midi)
+      })
     }
-    expect(tiesSeen).toBeGreaterThan(0)
+    expect(tiesSeen).toBe(chords.length)
   })
 
   it('lands on chord tones most of the time on the beat', () => {

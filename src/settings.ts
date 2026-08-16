@@ -1,5 +1,6 @@
 import type { Level } from './music/rhythm'
 import type { SwingId } from './audio/schedule'
+import { LEVELS } from './music/rhythm'
 import { SWING_SETTINGS } from './audio/schedule'
 import { KEYS } from './music/pitch'
 import { PROGRESSIONS } from './music/progression'
@@ -36,8 +37,6 @@ export const DEFAULT_SETTINGS: Settings = {
   playBass: true,
   playMelody: true,
 }
-
-const LEVELS: readonly Level[] = [1, 2, 3, 4]
 
 function oneOf<T>(value: unknown, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback

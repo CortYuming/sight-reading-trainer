@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Level } from './music/rhythm'
+import { LEVELS, isMixed } from './music/rhythm'
 import type { SwingId } from './audio/schedule'
 import { generateExercise } from './music/exercise'
 import { PROGRESSIONS } from './music/progression'
@@ -10,8 +11,6 @@ import { Score } from './components/Score'
 import { TEMPO_MAX, TEMPO_MIN, loadSettings, saveSettings } from './settings'
 import type { Settings } from './settings'
 import './App.css'
-
-const LEVELS: Level[] = [1, 2, 3, 4]
 
 const randomSeed = () => Math.floor(Math.random() * 1_000_000)
 
@@ -72,8 +71,9 @@ export default function App() {
           else setActiveMelody(note)
         },
         onBar: setCurrentBar,
-        onStop: () => {
+        onStop: (barIndex) => {
           setPlaying(false)
+          setCurrentBar(barIndex)
           clearHighlight()
         },
       })
@@ -267,11 +267,20 @@ export default function App() {
           <label className="field">
             <span className="field-label">Level</span>
             <select value={level} onChange={(e) => setLevel(Number(e.target.value) as Level)}>
-              {LEVELS.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
+              <optgroup label="Basics">
+                {LEVELS.filter((l) => !isMixed(l)).map((l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Advanced">
+                {LEVELS.filter(isMixed).map((l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </label>
 

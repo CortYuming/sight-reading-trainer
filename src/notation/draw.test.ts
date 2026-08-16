@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
-import type { Level } from '../music/rhythm'
+import { LEVELS } from '../music/rhythm'
 import { generateExercise } from '../music/exercise'
 import { KEYS } from '../music/pitch'
 import { PROGRESSIONS } from '../music/progression'
@@ -8,7 +8,6 @@ import { bassSpecs, melodySpecs } from './spec'
 import type { NoteSpec } from './spec'
 import { MEASURE_HEIGHT, drawMeasure } from './draw'
 
-const LEVELS: Level[] = [1, 2, 3, 4]
 
 function render(notes: ReturnType<typeof melodySpecs>, keySignature: string, showHeader = true) {
   const container = document.createElement('div')
@@ -48,27 +47,26 @@ describe('drawMeasure', () => {
   })
 
   it(
-    'draws triplets and ties, which is where the tick maths can go wrong',
+    'draws triplets and sextuplets, which is where the tick maths can go wrong',
     { timeout: 60_000 },
     () => {
-      let tripletsDrawn = 0
-      let tiesDrawn = 0
-      for (let seed = 1; seed <= 8; seed++) {
+      const drawn = new Set<number>()
+      for (let seed = 1; seed <= 24; seed++) {
         const exercise = generateExercise({
           keyName: 'C',
           progressionId: 'autumn',
-          level: 4,
+          level: 6,
           seed,
         })
         for (const bar of exercise.bars) {
           const specs = melodySpecs(bar)
-          if (specs.some((s) => s.triplet !== undefined)) tripletsDrawn++
-          if (specs.some((s) => s.tieToNext)) tiesDrawn++
+          for (const spec of specs) {
+            if (spec.tuplet) drawn.add(spec.tuplet.numNotes)
+          }
           expect(() => render(specs, 'C')).not.toThrow()
         }
       }
-      expect(tripletsDrawn).toBeGreaterThan(0)
-      expect(tiesDrawn).toBeGreaterThan(0)
+      expect([...drawn].sort()).toEqual([3, 6])
     },
   )
 

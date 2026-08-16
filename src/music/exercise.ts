@@ -7,7 +7,7 @@ import type { SpelledPitch } from './spelling'
 import { buildProgression, findProgression } from './progression'
 import { createRng } from './random'
 import { findKey } from './pitch'
-import { generateBarRhythm } from './rhythm'
+import { generateBarRhythms } from './rhythm'
 import { generateBass } from './bass'
 import { generateMelody } from './melody'
 import { chordScaleSpelling, spellSequence } from './spelling'
@@ -45,7 +45,7 @@ export function generateExercise(options: ExerciseOptions): Exercise {
   const rng = createRng(options.seed)
 
   const chords = buildProgression(progression, key.root, key.prefer)
-  const rhythms = chords.map(() => generateBarRhythm(options.level, rng))
+  const rhythms = generateBarRhythms(options.level, chords.length, rng)
   const bass = generateBass(chords, rng)
   const melody = generateMelody(rhythms, chords, rng)
 

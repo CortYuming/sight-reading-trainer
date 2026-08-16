@@ -1,5 +1,5 @@
 import type { ExerciseBar } from '../music/exercise'
-import type { Duration } from '../music/rhythm'
+import type { Duration, EventTuplet } from '../music/rhythm'
 import { spelledVexKey } from '../music/spelling'
 
 /** One note or rest, in the form VexFlow needs. */
@@ -9,8 +9,8 @@ export interface NoteSpec {
   duration: Duration
   dots: number
   rest: boolean
-  /** Index of the triplet group this note belongs to, within the bar. */
-  triplet?: number
+  /** Set when this note belongs to a tuplet. */
+  tuplet?: EventTuplet
   tieToNext: boolean
 }
 
@@ -33,7 +33,7 @@ export function melodySpecs(bar: ExerciseBar): NoteSpec[] {
     duration: event.dur,
     dots: event.dots,
     rest: event.rest,
-    ...(event.triplet !== undefined ? { triplet: event.triplet } : {}),
+    ...(event.tuplet ? { tuplet: event.tuplet } : {}),
     tieToNext: event.tie,
   }))
 }
