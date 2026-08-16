@@ -15,6 +15,8 @@ const entry = (seed: number, over: Partial<HistoryEntry> = {}): HistoryEntry => 
   progressionId: 'blues',
   level: 2,
   seed,
+  // Built from local parts, so the label reads the same in any timezone.
+  at: new Date(2026, 7, 16, 10, 12, 34).getTime(),
   ...over,
 })
 
@@ -50,8 +52,11 @@ describe('remember', () => {
 })
 
 describe('entryLabel', () => {
-  it('names the form rather than its id', () => {
-    expect(entryLabel(entry(1))).toBe('Bb · Jazz Blues · L2')
+  it('reads as a zero-padded date and time, down to the second', () => {
+    expect(entryLabel(entry(1))).toBe('08/16 10:12:34')
+    expect(entryLabel(entry(1, { at: new Date(2026, 0, 3, 9, 5, 7).getTime() }))).toBe(
+      '01/03 09:05:07',
+    )
   })
 })
 
@@ -68,6 +73,8 @@ describe('readHistory', () => {
       { ...entry(3), progressionId: 'rhythm-changes' },
       { ...entry(4), level: 99 },
       { ...entry(5), seed: 'random' },
+      // Written before the list carried times, so it can no longer be labelled.
+      { keyName: 'Bb', progressionId: 'blues', level: 2, seed: 7 },
       entry(6),
     ]
     expect(readHistory(stored).map((e) => e.seed)).toEqual([1, 6])

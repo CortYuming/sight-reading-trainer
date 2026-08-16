@@ -25,9 +25,11 @@ repository does not exist, so nothing has been pushed.
   rebuilding; worth a second listen before calling it done.
 - `gh repo create` and a GitHub Pages deploy. The workflow file still has to be
   copied over from chord-vamp, with `node-version: 22` to match the volta pin.
-- The bundle is 1.2MB (516kB gzipped), almost all of it the Bravura music font.
-  Self-hosting the woff2 through `vexflow/core` would cut it, at the cost of a
-  second request.
+
+The bundle is 1.2MB, 503kB gzipped, and 288kB of that is the Bravura music
+font, embedded as base64. Serving the woff2 as its own file instead was
+measured at 287kB: gzip recovers the whole of the base64 overhead, so there is
+nothing there to win and it is not worth the second request.
 
 ## Notation
 

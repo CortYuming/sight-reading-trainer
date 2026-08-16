@@ -12,18 +12,34 @@ export const HISTORY_LIMIT = 5
 /**
  * An exercise is nothing more than what it was generated from, so going back
  * to one is a matter of remembering four fields rather than a page of music.
+ * The fifth, `at`, is only there to label it in the list.
  */
-export type HistoryEntry = ExerciseOptions
+export interface HistoryEntry extends ExerciseOptions {
+  /** When the exercise was last read, as a timestamp. */
+  at: number
+}
 
-/** Identifies an entry in the list and as the value of an option. */
+/**
+ * Identifies an entry in the list and as the value of an option. The time is
+ * left out: it is what the entry is labelled with, not what it is.
+ */
 export function entryId(entry: HistoryEntry): string {
   return `${entry.keyName}|${entry.progressionId}|${entry.level}|${entry.seed}`
 }
 
-/** e.g. "Bb · Jazz Blues · L2" */
+function pad(value: number): string {
+  return String(value).padStart(2, '0')
+}
+
+/**
+ * e.g. "08/16 10:12:34". Down to the second, because two exercises read a
+ * minute apart are otherwise labelled the same.
+ */
 export function entryLabel(entry: HistoryEntry): string {
-  const progression = PROGRESSIONS.find((p) => p.id === entry.progressionId)
-  return `${entry.keyName} · ${progression?.name ?? entry.progressionId} · L${entry.level}`
+  const at = new Date(entry.at)
+  const date = `${pad(at.getMonth() + 1)}/${pad(at.getDate())}`
+  const time = `${pad(at.getHours())}:${pad(at.getMinutes())}:${pad(at.getSeconds())}`
+  return `${date} ${time}`
 }
 
 /**
@@ -47,16 +63,18 @@ export function remember(history: HistoryEntry[], entry: HistoryEntry): HistoryE
  */
 function readEntry(stored: unknown): HistoryEntry | null {
   if (stored === null || typeof stored !== 'object') return null
-  const { keyName, progressionId, level, seed } = stored as Record<string, unknown>
+  const { keyName, progressionId, level, seed, at } = stored as Record<string, unknown>
   if (!KEYS.some((k) => k.name === keyName)) return null
   if (!PROGRESSIONS.some((p) => p.id === progressionId)) return null
   if (!LEVELS.includes(level as Level)) return null
   if (typeof seed !== 'number' || !Number.isInteger(seed)) return null
+  if (typeof at !== 'number' || !Number.isFinite(at)) return null
   return {
     keyName: keyName as string,
     progressionId: progressionId as string,
     level: level as Level,
     seed,
+    at,
   }
 }
 

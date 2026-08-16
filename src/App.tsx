@@ -41,8 +41,10 @@ export default function App() {
   const [activeBass, setActiveBass] = useState<ActiveNoteState>(null)
   const [activeMelody, setActiveMelody] = useState<ActiveNoteState>(null)
 
+  // Stamped when the exercise changes, so the history is labelled with when it
+  // was last read rather than when it was first drawn.
   const current = useMemo<HistoryEntry>(
-    () => ({ keyName, progressionId, level, seed }),
+    () => ({ keyName, progressionId, level, seed, at: Date.now() }),
     [keyName, progressionId, level, seed],
   )
   const exercise = useMemo(() => generateExercise(current), [current])
@@ -343,9 +345,9 @@ export default function App() {
           <label className="field history">
             <span className="field-label">History</span>
             <select value={entryId(current)} onChange={(e) => recall(e.target.value)}>
-              {recent.map((entry, i) => (
+              {recent.map((entry) => (
                 <option key={entryId(entry)} value={entryId(entry)}>
-                  {i + 1}. {entryLabel(entry)}
+                  {entryLabel(entry)}
                 </option>
               ))}
             </select>
