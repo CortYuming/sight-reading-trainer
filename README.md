@@ -48,7 +48,10 @@ phone. There is no time signature — every exercise is in 4/4.
 - Swing has four depths. Measurements of jazz drummers put the ratio near 3.5:1
   at slow tempos and close to 1:1 above 250bpm, so the default is the deep end
   to match the slow default tempo.
-- Key, form, level, tempo, swing and the three switches are kept in the browser
+- **Note names** writes each note's letter beside its head, in the spelling the
+  staff uses. Off by default — reading the pitch is the exercise, so the letters
+  are there to fall back on. They shrink where a bar is too packed to take them.
+- Key, form, level, tempo, swing and the four switches are kept in the browser
   and restored on the next visit. The exercise is not: coming back gives a new
   one to read.
 

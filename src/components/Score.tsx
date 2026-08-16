@@ -23,6 +23,8 @@ interface ScoreProps {
   pendingBar: number | null
   activeBass: ActiveNote | null
   activeMelody: ActiveNote | null
+  /** Write the letter names beside the noteheads on both staves. */
+  showNoteNames: boolean
   onSelectBar: (bar: number) => void
 }
 
@@ -32,6 +34,7 @@ export function Score({
   pendingBar,
   activeBass,
   activeMelody,
+  showNoteNames,
   onSelectBar,
 }: ScoreProps) {
   const [ref, width] = useElementWidth<HTMLDivElement>()
@@ -76,6 +79,7 @@ export function Score({
                 notes={bar.bass}
                 keySignature={exercise.key.name}
                 showHeader={i === 0}
+                showNoteNames={showNoteNames}
                 width={bassWidth}
                 activeIndex={activeBass?.barIndex === i ? activeBass.index : null}
               />
@@ -88,6 +92,7 @@ export function Score({
                 notes={bar.melody}
                 keySignature={exercise.key.name}
                 showHeader={i === 0}
+                showNoteNames={showNoteNames}
                 width={melodyWidth}
                 activeIndex={activeMelody?.barIndex === i ? activeMelody.index : null}
               />

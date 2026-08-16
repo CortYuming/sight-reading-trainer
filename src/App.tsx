@@ -29,6 +29,7 @@ export default function App() {
   const [countIn, setCountIn] = useState(saved.countIn)
   const [playBass, setPlayBass] = useState(saved.playBass)
   const [playMelody, setPlayMelody] = useState(saved.playMelody)
+  const [showNoteNames, setShowNoteNames] = useState(saved.showNoteNames)
 
   const [playing, setPlaying] = useState(false)
   const [currentBar, setCurrentBar] = useState(0)
@@ -182,8 +183,18 @@ export default function App() {
   useEffect(() => () => player.stop(), [player])
 
   useEffect(() => {
-    saveSettings({ keyName, progressionId, level, bpm, swing, countIn, playBass, playMelody })
-  }, [keyName, progressionId, level, bpm, swing, countIn, playBass, playMelody])
+    saveSettings({
+      keyName,
+      progressionId,
+      level,
+      bpm,
+      swing,
+      countIn,
+      playBass,
+      playMelody,
+      showNoteNames,
+    })
+  }, [keyName, progressionId, level, bpm, swing, countIn, playBass, playMelody, showNoteNames])
 
   return (
     <div className="page">
@@ -298,6 +309,7 @@ export default function App() {
           <Chip label="Count-in" checked={countIn} onChange={setCountIn} />
           <Chip label="Bass" checked={playBass} onChange={setPlayBass} />
           <Chip label="Melody" checked={playMelody} onChange={setPlayMelody} />
+          <Chip label="Note names" checked={showNoteNames} onChange={setShowNoteNames} />
 
           <button type="button" className="btn" onClick={() => setSeed(randomSeed())}>
             &#8635; New
@@ -312,6 +324,7 @@ export default function App() {
           pendingBar={pending?.bar ?? null}
           activeBass={activeBass}
           activeMelody={activeMelody}
+          showNoteNames={showNoteNames}
           onSelectBar={goToBar}
         />
 

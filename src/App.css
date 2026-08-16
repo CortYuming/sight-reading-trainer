@@ -255,6 +255,18 @@ select {
   stroke: var(--accent);
 }
 
+/*
+ * The letter names, a shade back from the ink so they read as an aid rather
+ * than as part of the notation, but no lighter than that: at this size they
+ * have to be legible at a glance while playing. The selectors have to
+ * out-specify the blanket fill rules above.
+ */
+.measure svg g.vf-note-name,
+.measure svg g.vf-note-name [fill]:not([fill='none']) {
+  fill: var(--aid);
+  stroke: none;
+}
+
 .note {
   margin-top: 1.25rem;
   font-size: 0.78rem;

@@ -6,6 +6,7 @@ interface MeasureProps {
   notes: NoteSpec[]
   keySignature: string
   showHeader: boolean
+  showNoteNames: boolean
   width: number
   /** Index of the note to highlight while it sounds, or null. */
   activeIndex: number | null
@@ -13,7 +14,14 @@ interface MeasureProps {
 
 const ACTIVE_CLASS = 'note-active'
 
-export function Measure({ notes, keySignature, showHeader, width, activeIndex }: MeasureProps) {
+export function Measure({
+  notes,
+  keySignature,
+  showHeader,
+  showNoteNames,
+  width,
+  activeIndex,
+}: MeasureProps) {
   const ref = useRef<HTMLDivElement>(null)
   const groups = useRef<Element[]>([])
   // Read inside the drawing effect without making it redraw on every note.
@@ -24,10 +32,10 @@ export function Measure({ notes, keySignature, showHeader, width, activeIndex }:
     const element = ref.current
     if (!element || width <= 0) return
 
-    drawMeasure(element, { notes, keySignature, showHeader, width })
+    drawMeasure(element, { notes, keySignature, showHeader, showNoteNames, width })
     groups.current = Array.from(element.querySelectorAll('g.vf-stavenote'))
     highlight(groups.current, active.current)
-  }, [notes, keySignature, showHeader, width])
+  }, [notes, keySignature, showHeader, showNoteNames, width])
 
   useEffect(() => {
     highlight(groups.current, activeIndex)

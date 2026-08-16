@@ -8,6 +8,8 @@
   --toolbar-bg: #f6f6f4;
   --text: #1a1a1a;
   --muted: #6b6b70;
+  /* The letter names: clearly darker than --muted, but still not the ink. */
+  --aid: #45454d;
   --border: #d8d8d4;
   --border-strong: #b9b9b3;
   --accent: #c2410c;

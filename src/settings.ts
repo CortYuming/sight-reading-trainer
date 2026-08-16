@@ -23,6 +23,7 @@ export interface Settings {
   countIn: boolean
   playBass: boolean
   playMelody: boolean
+  showNoteNames: boolean
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -36,6 +37,9 @@ export const DEFAULT_SETTINGS: Settings = {
   countIn: true,
   playBass: true,
   playMelody: true,
+  // Off by default: reading the pitch off the staff is the exercise, so the
+  // letters are there to fall back on rather than to read instead.
+  showNoteNames: false,
 }
 
 function oneOf<T>(value: unknown, allowed: readonly T[], fallback: T): T {
@@ -80,6 +84,7 @@ export function readSettings(stored: unknown): Settings {
     countIn: boolean(raw.countIn, DEFAULT_SETTINGS.countIn),
     playBass: boolean(raw.playBass, DEFAULT_SETTINGS.playBass),
     playMelody: boolean(raw.playMelody, DEFAULT_SETTINGS.playMelody),
+    showNoteNames: boolean(raw.showNoteNames, DEFAULT_SETTINGS.showNoteNames),
   }
 }
 
