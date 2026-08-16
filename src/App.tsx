@@ -10,6 +10,8 @@ import { Player } from './audio/player'
 import { Score } from './components/Score'
 import { TEMPO_MAX, TEMPO_MIN, loadSettings, saveSettings } from './settings'
 import type { Settings } from './settings'
+import { entryId, entryLabel, loadHistory, remember, saveHistory } from './history'
+import type { HistoryEntry } from './history'
 import './App.css'
 
 const randomSeed = () => Math.floor(Math.random() * 1_000_000)
@@ -39,11 +41,34 @@ export default function App() {
   const [activeBass, setActiveBass] = useState<ActiveNoteState>(null)
   const [activeMelody, setActiveMelody] = useState<ActiveNoteState>(null)
 
-  const exercise = useMemo(
-    () => generateExercise({ keyName, progressionId, level, seed }),
+  const current = useMemo<HistoryEntry>(
+    () => ({ keyName, progressionId, level, seed }),
     [keyName, progressionId, level, seed],
   )
+  const exercise = useMemo(() => generateExercise(current), [current])
   const barCount = exercise.bars.length
+
+  // `recent` rather than `history` is what the list shows, so the exercise on
+  // screen is in it from the first render instead of arriving an effect later.
+  const [history, setHistory] = useState<HistoryEntry[]>(loadHistory)
+  const recent = useMemo(() => remember(history, current), [history, current])
+
+  useEffect(() => {
+    setHistory(recent)
+    saveHistory(recent)
+  }, [recent])
+
+  const recall = useCallback(
+    (id: string) => {
+      const entry = recent.find((candidate) => entryId(candidate) === id)
+      if (entry === undefined) return
+      setKeyName(entry.keyName)
+      setProgressionId(entry.progressionId)
+      setLevel(entry.level)
+      setSeed(entry.seed)
+    },
+    [recent],
+  )
 
   const playerRef = useRef<Player | null>(null)
   if (playerRef.current === null) playerRef.current = new Player()
@@ -314,6 +339,17 @@ export default function App() {
           <button type="button" className="btn" onClick={() => setSeed(randomSeed())}>
             &#8635; New
           </button>
+
+          <label className="field history">
+            <span className="field-label">History</span>
+            <select value={entryId(current)} onChange={(e) => recall(e.target.value)}>
+              {recent.map((entry, i) => (
+                <option key={entryId(entry)} value={entryId(entry)}>
+                  {i + 1}. {entryLabel(entry)}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </header>
 

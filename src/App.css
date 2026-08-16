@@ -68,6 +68,17 @@ select {
   background-size: 0.6rem;
 }
 
+/*
+ * Fixed width, because a select sizes itself to its longest option and the
+ * history's options change as the list fills — without this the whole toolbar
+ * shifts sideways every time a new exercise is drawn.
+ */
+.field.history select {
+  width: 12rem;
+  max-width: 100%;
+  text-overflow: ellipsis;
+}
+
 .btn {
   cursor: pointer;
 }

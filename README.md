@@ -54,6 +54,10 @@ phone. There is no time signature — every exercise is in 4/4.
 - Key, form, level, tempo, swing and the four switches are kept in the browser
   and restored on the next visit. The exercise is not: coming back gives a new
   one to read.
+- **History** lists the last five exercises, newest first, and going back to one
+  moves it to the top — so the next new exercise pushes out something untouched
+  rather than the one just picked out to practise. Only what an exercise is
+  generated from is stored, which is enough to draw it again exactly.
 
 ## How an exercise is built
 
