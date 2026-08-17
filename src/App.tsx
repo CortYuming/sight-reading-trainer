@@ -337,7 +337,19 @@ export default function App() {
 
           <label className="field level">
             <span className="field-label">Level</span>
-            <select value={level} onChange={(e) => setLevel(Number(e.target.value) as Level)}>
+            {/*
+              A new level is a new thing to practise, so it comes with a new
+              exercise. Key and form do not: leaving the seed alone there is
+              what lets the same line be read in another key, which is a
+              practice of its own.
+            */}
+            <select
+              value={level}
+              onChange={(e) => {
+                setLevel(Number(e.target.value) as Level)
+                setSeed(randomSeed())
+              }}
+            >
               <optgroup label="Basics">
                 {LEVELS.filter((l) => !isMixed(l)).map((l) => (
                   <option key={l} value={l}>
