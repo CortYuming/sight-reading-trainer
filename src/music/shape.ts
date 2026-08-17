@@ -24,13 +24,15 @@ export interface Shape {
 }
 
 /**
- * The three note shapes, a group to a direction, transcribed from pages 4-7.
+ * The three note shapes, a group to a direction, transcribed from every staff
+ * of pages 4-7.
  *
- * Each direction holds more than one shape, because what the book fixes is
- * which way a step goes and not how far: an up-up is a triad on page 4 and a
- * down-down is a scale run on page 6, and both are the same lesson. Reading
- * only page 4 gave the opposite impression, and shapes built on it were wrong
- * in three of the four directions.
+ * A direction is several shapes rather than one, because what the book fixes
+ * is which way a step goes and not how far. An up-up is a triad in one bar and
+ * a scale run in the next; a down-up drops a third and comes back a fourth,
+ * fifth or second. Reading page 4 alone suggested the shapes were triads and
+ * nothing else, and what was built on that was wrong in three of the four
+ * directions.
  *
  * Each repetition moves on by a degree, which is how the shapes are drilled —
  * the same figure from every note of the scale. Where a shape ends one degree
@@ -40,10 +42,13 @@ export interface Shape {
 const UP_UP: readonly Shape[] = [
   { id: 'up-up', degrees: [1, 2, 3], sequence: 1 },
   { id: 'up-up', degrees: [1, 3, 5], sequence: 1 },
+  { id: 'up-up', degrees: [1, 4, 5], sequence: 1 },
 ]
 const UP_DOWN: readonly Shape[] = [
   { id: 'up-down', degrees: [1, 2, 1], sequence: 1 },
   { id: 'up-down', degrees: [1, 3, 1], sequence: 1 },
+  // Up, then past where it started rather than back to it.
+  { id: 'up-down', degrees: [3, 4, 1], sequence: 1 },
 ]
 const DOWN_DOWN: readonly Shape[] = [
   { id: 'down-down', degrees: [3, 2, 1], sequence: 1 },
@@ -52,6 +57,7 @@ const DOWN_DOWN: readonly Shape[] = [
 const DOWN_UP: readonly Shape[] = [
   { id: 'down-up', degrees: [2, 1, 3], sequence: 2 },
   { id: 'down-up', degrees: [3, 1, 4], sequence: 2 },
+  { id: 'down-up', degrees: [3, 1, 5], sequence: 1 },
 ]
 
 /**

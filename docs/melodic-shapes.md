@@ -38,8 +38,9 @@ all four in order.
 
 ## What was transcribed
 
-One page per category, one or two staves of each — and all four of the three
-note directions, since those are what is built.
+Every staff of pages 4-7, which is all four three note directions and is what
+the app is built on. One staff each of the other categories, enough to see what
+they are and not enough to build them.
 
 ### Eight note — page 20
 
@@ -74,9 +75,15 @@ closely enough to state.
 | 3 | Fm7 | A♭4 C5 F5 | F minor triad, first inversion |
 | 4 | Am7♭5 D7♭9 | A♮4 D5 E♭5 | not a triad: the root and ♭9 of D7♭9 |
 
-Three of the four bars are a plain triad in an inversion. Up-up is not a walk
-up the scale — it is the chord itself, entered from whichever of its notes the
-line has arrived on.
+Three of the four bars are a plain triad in an inversion — which was read, on
+this staff alone, as up-up being the chord itself rather than a walk up the
+scale. The rest of the page says otherwise. Later staves run C5 E♭5 G5 and G4
+B♭4 D5, triads again, but also C5 F5 G5 (a fourth then a second) and long
+stretches of plain scale: B♭3 E♭4 F4 G4 A♭4 B♭4 C5 D5 E♭5, three notes at a
+time with each cell starting where the last ended.
+
+So up-up is three notes rising and nothing more. Thirds, seconds and fourths
+are all in it.
 
 ### Three note, the other three directions — pages 5-7, E♭
 
@@ -94,11 +101,16 @@ itself walking down.
 A♭5 G5 F5  G5 F5 E♭5 | F5 E♭5 D5  E♭5 D5 C5  D5 C5 B♭4  C5 B♭4 G4 | C5 B♭4 G4 …
 ```
 
-**Down-up (page 7).** Down, then back up past where it started.
+**Down-up (page 7).** Down, then back up past where it started. Mostly a third
+down and a fourth back, sometimes a fifth: E♭5 C5 F5, A♭4 F4 B♭4, C5 A♭4 E♭5.
 
 ```
-E♭5 D5 F5 | D5 B♭4 E♭5 | B♭4 G4 C5  C5 B♭4 E♭5 | E♭5 D5 B♭4  E♭5 D5 B♭4
+E♭5 D5 F5 | D5 B♭4 E♭5 | B♭4 G4 C5  C5 B♭4 E♭5 | C5 A♭4 E♭5  C5 A♭4 E♭5
 ```
+
+**Up-down again.** Page 5's later staves do not always come back to the note
+they left; often they carry on past it, and the figure sequences down in
+thirds: C5 D5 B♭4, B♭4 C5 G4, G4 B♭4 F4.
 
 Which settles what a shape is, and it is not what page 4 alone suggested. **The
 book fixes the direction of each step, not its size.** An up-up is a triad on

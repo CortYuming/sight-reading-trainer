@@ -94,16 +94,16 @@ describe('realiseShape', () => {
   })
 
   // Where a shape fits, it keeps its contour: the widest step any three note
-  // shape asks for is the fourth of down-up, so nothing inside a figure leaps.
-  // Where it does not fit the notes fold, which is why the melody skips those
-  // offsets rather than using them.
-  it('never leaps inside a shape that fits', () => {
+  // shape asks for is the fifth of down-up, so nothing inside a figure reaches
+  // further. Where it does not fit the notes fold, which is why the melody
+  // skips those offsets rather than using them.
+  it('never reaches past a fifth inside a shape that fits', () => {
     let fitted = 0
     for (const { fits, pitches } of everyRealisation()) {
       if (!fits) continue
       fitted++
       for (let i = 1; i < pitches.length; i++) {
-        expect(Math.abs(pitches[i] - pitches[i - 1])).toBeLessThanOrEqual(7)
+        expect(Math.abs(pitches[i] - pitches[i - 1])).toBeLessThanOrEqual(8)
       }
     }
     expect(fitted).toBeGreaterThan(1000)
@@ -184,14 +184,14 @@ describe('a melody built from shapes', () => {
     expect(tiesSeen).toBeGreaterThan(0)
   })
 
-  // The shapes are built of seconds and thirds, so most of the line is. What is
+  // No shape reaches past a fifth, so almost nothing in the line does. What is
   // left is the joins: the melody range is an octave and a half, which for some
   // shapes leaves only one place to fit, and the next cell has to go there
-  // whether or not it is near. Those are the leaps, and they are in the seams
-  // rather than inside a figure.
-  it('moves by step or third nearly all the time', () => {
+  // whether or not it is near. Those are the wide moves, and they fall in the
+  // seams rather than inside a figure.
+  it('moves within a fifth nearly all the time', () => {
     let moves = 0
-    let stepsOrThirds = 0
+    let withinFifth = 0
     for (const seed of SEEDS) {
       for (let p = 0; p < PROGRESSIONS.length; p++) {
         const line = build(seed, p)
@@ -202,12 +202,12 @@ describe('a melody built from shapes', () => {
           const distance = Math.abs(line[i] - line[i - 1])
           if (distance === 0) continue
           moves++
-          if (distance <= 4) stepsOrThirds++
+          if (distance <= 8) withinFifth++
         }
       }
     }
     expect(moves).toBeGreaterThan(100)
-    expect(stepsOrThirds / moves).toBeGreaterThan(0.7)
+    expect(withinFifth / moves).toBeGreaterThan(0.85)
   })
 
   it('is reproducible from a seed', () => {
