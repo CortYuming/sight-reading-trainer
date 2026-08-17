@@ -15,16 +15,33 @@ repository does not exist, so nothing has been pushed.
 2. ~~**Phase 2** — notation on two staves (VexFlow)~~
 3. ~~**Phase 3** — playback with swing feel (Tone.js)~~
 4. **Phase 4** — settings, responsive layout, GitHub Pages
+5. **Phase 5** — melodic shapes. Three and four note done, levels 11-22; five
+   and eight note still to read out of the book. See
+   [docs/melodic-shapes.md](docs/melodic-shapes.md).
 
 ## Remaining work
 
+- **Publish it.** `gh repo create` and a GitHub Pages deploy; the workflow file
+  has to be copied over from chord-vamp, with `node-version: 22` to match the
+  volta pin. This is the one that matters most: the shape levels have never
+  been played with a guitar in hand, because there is nowhere to open them but
+  a dev server.
+- **Five note shapes**, pages 14-19 of the book, as levels 23 and up. One staff
+  has been read (all-up over Stablemates, 2-3-5-7-9 over Em7) and the rest have
+  not. Reading one staff has been wrong twice now, so read every one.
+- **Eight note shapes**, page 20, the Little Jazz Lines. The degrees are
+  settled — 1-3-5-7-4-3-6-5, confirmed against four groups — so no more
+  transcribing is needed, but a decision is: eight notes do not fit a beat. On
+  page 20 they sit as sixteenths across two, and a bar of the shape pool may
+  not have room to finish one, let alone sequence it. Work out how the cell
+  meets the rhythm before writing it.
 - Tighten the layout on a narrow phone. The two columns hold together down to
   about 320px, but nothing has been checked on a real handset.
 - Listen for whether the tail of a note is clipped at a barline when the bar
   repeats. Reported as "not always smooth" and fixed by seeking instead of
   rebuilding; worth a second listen before calling it done.
-- `gh repo create` and a GitHub Pages deploy. The workflow file still has to be
-  copied over from chord-vamp, with `node-version: 22` to match the volta pin.
+- Check that a shape level's name is not cut off in the level menu. The widest
+  is `19 — down-down-down` against a 12rem cap in `.field.level select`.
 
 The bundle is 1.2MB, 503kB gzipped, and 288kB of that is the Bravura music
 font, embedded as base64. Serving the woff2 as its own file instead was
