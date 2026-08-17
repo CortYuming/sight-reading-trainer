@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { LEVELS } from '../music/rhythm'
+import { LEVELS, TICKS_PER_BEAT } from '../music/rhythm'
 import { generateExercise } from '../music/exercise'
 import { KEYS } from '../music/pitch'
 import { PROGRESSIONS } from '../music/progression'
@@ -26,6 +26,30 @@ describe('sixteenths under swing', () => {
     for (let i = 1; i < times.length; i++) {
       expect(times[i] - times[i - 1]).toBeCloseTo(0.25)
     }
+  })
+})
+
+describe('a run of sixteenths', () => {
+  const exercise = generateExercise({
+    keyName: 'Bb',
+    progressionId: 'blues',
+    level: 1,
+    seed: 11,
+  })
+  const bar = exercise.bars.findIndex((b) => b.melody.length === 16)
+  const run = scheduleExercise(exercise, FULL_SWING).notes.filter(
+    (n) => n.part === 'melody' && n.barIndex === bar,
+  )
+
+  it('joins the notes up with nothing between them', () => {
+    expect(run).toHaveLength(16)
+    for (let i = 1; i < run.length; i++) {
+      expect(run[i - 1].time + run[i - 1].duration).toBeCloseTo(run[i].time)
+    }
+  })
+
+  it('plays them all at one weight', () => {
+    expect(new Set(run.map((n) => n.velocity)).size).toBe(1)
   })
 })
 
@@ -72,6 +96,43 @@ describe('scheduleExercise', () => {
     const first = schedule.notes.find((n) => n.part === 'bass')
     expect(first?.midi).toBe(exercise.bars[0].bass[0].midi + SOUNDING_OFFSET)
     expect(SOUNDING_OFFSET).toBe(-12)
+  })
+
+  it('walks the bass at one weight', () => {
+    const bass = scheduleExercise(exercise, FULL_SWING).notes.filter((n) => n.part === 'bass')
+    expect(new Set(bass.map((n) => n.velocity))).toEqual(new Set([1]))
+  })
+
+  it('leans on the off-beat eighth, not on its partner on the beat', () => {
+    const half = TICKS_PER_BEAT / 2
+    const melody = scheduleExercise(exercise, FULL_SWING).notes.filter((n) => n.part === 'melody')
+    const at = (barIndex: number, index: number) =>
+      melody.find((n) => n.barIndex === barIndex && n.index === index)
+
+    // Off-beat eighths have to be picked out of the exercise rather than off
+    // the clock: the last note of a triplet lands at the same moment without
+    // being the note a swung line leans on.
+    let checked = 0
+    exercise.bars.forEach((bar, barIndex) => {
+      bar.melody.forEach((event, index) => {
+        if (event.tuplet || event.rest) return
+        if (event.ticks !== half || event.start % TICKS_PER_BEAT !== half) return
+        const note = at(barIndex, index)
+        // A note tied into from the one before is never attacked on its own.
+        if (note === undefined) return
+
+        checked++
+        expect(note.velocity).toBe(1)
+        const opener = bar.melody.findIndex(
+          (e) => e.start === event.start - half && e.ticks === half && !e.rest,
+        )
+        if (opener !== -1) {
+          const partner = at(barIndex, opener)
+          if (partner) expect(partner.velocity).toBeLessThan(note.velocity)
+        }
+      })
+    })
+    expect(checked).toBeGreaterThan(0)
   })
 
   it('plays a tied pair as one held note', () => {

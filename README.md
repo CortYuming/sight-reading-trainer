@@ -48,12 +48,22 @@ phone. There is no time signature — every exercise is in 4/4.
   the bar being read is never cut in half. The queued bar is marked with a
   dashed line in the margin.
 - Swing has four depths. Measurements of jazz drummers put the ratio near 3.5:1
-  at slow tempos and close to 1:1 above 250bpm, so the default is the deep end
-  to match the slow default tempo.
+  at slow tempos and close to 1:1 above 250bpm; the default sits in the middle,
+  at the 2:1 triplet feel the notation implies.
+- **Drums** play the jazz ride pattern — a stroke on every beat and a swung
+  eighth after two and four — with the hi-hat foot closing on two and four. The
+  swung strokes take the same ratio the melody does, so the kit is what the
+  swing setting sounds like rather than a fixed feel behind it.
+- The melody is played legato, with the weight on the off-beat eighths rather
+  than on the beat — which is how a jazz line is articulated, and the beat is
+  already being marked by the bass and the ride. Runs of sixteenths and
+  sextuplets are played even: they take their shape from the contour of the
+  line, not from the beat. Each note's envelope is cut down to fit its own
+  length, or a run smears into one sound.
 - **Note names** writes each note's letter beside its head, in the spelling the
   staff uses. Off by default — reading the pitch is the exercise, so the letters
   are there to fall back on. They shrink where a bar is too packed to take them.
-- Key, form, level, tempo, swing and the four switches are kept in the browser
+- Key, form, level, tempo, swing and the five switches are kept in the browser
   and restored on the next visit. The exercise is not: coming back gives a new
   one to read.
 - **History** lists the last five exercises, newest first, and going back to one

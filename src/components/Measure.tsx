@@ -10,6 +10,9 @@ interface MeasureProps {
   width: number
   /** Index of the note to highlight while it sounds, or null. */
   activeIndex: number | null
+  /** Opening and closing repeat barlines, drawn on the first and last bar. */
+  repeatBegin: boolean
+  repeatEnd: boolean
 }
 
 const ACTIVE_CLASS = 'note-active'
@@ -21,6 +24,8 @@ export function Measure({
   showNoteNames,
   width,
   activeIndex,
+  repeatBegin,
+  repeatEnd,
 }: MeasureProps) {
   const ref = useRef<HTMLDivElement>(null)
   const groups = useRef<Element[]>([])
@@ -32,10 +37,18 @@ export function Measure({
     const element = ref.current
     if (!element || width <= 0) return
 
-    drawMeasure(element, { notes, keySignature, showHeader, showNoteNames, width })
+    drawMeasure(element, {
+      notes,
+      keySignature,
+      showHeader,
+      showNoteNames,
+      width,
+      repeatBegin,
+      repeatEnd,
+    })
     groups.current = Array.from(element.querySelectorAll('g.vf-stavenote'))
     highlight(groups.current, active.current)
-  }, [notes, keySignature, showHeader, showNoteNames, width])
+  }, [notes, keySignature, showHeader, showNoteNames, width, repeatBegin, repeatEnd])
 
   useEffect(() => {
     highlight(groups.current, activeIndex)

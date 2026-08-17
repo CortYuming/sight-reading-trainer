@@ -33,6 +33,36 @@ describe('drawMeasure', () => {
     expect(svg?.querySelectorAll('path').length).toBeGreaterThan(0)
   })
 
+  it('draws repeat barlines', () => {
+    const exercise = generateExercise({
+      keyName: 'Bb',
+      progressionId: 'ii-v-i',
+      level: 1,
+      seed: 3,
+    })
+    const options = {
+      notes: bassSpecs(exercise.bars[0]),
+      keySignature: 'Bb',
+      width: 420,
+      showHeader: false,
+      showNoteNames: false,
+    }
+
+    const plain = document.createElement('div')
+    drawMeasure(plain, options)
+    const repeated = document.createElement('div')
+    drawMeasure(repeated, { ...options, repeatBegin: true, repeatEnd: true })
+
+    // The dots of the two repeat signs are drawn as paths of their own.
+    expect(repeated.querySelectorAll('path').length).toBeGreaterThan(
+      plain.querySelectorAll('path').length,
+    )
+    // Whether the notes then start clear of the opening sign is not checked
+    // here: jsdom has no canvas to measure glyphs with, so every width VexFlow
+    // works that spacing out from comes back as nothing. It is a thing to look
+    // at in a browser.
+  })
+
   it('draws every key, progression and level without throwing', { timeout: 60_000 }, () => {
     KEYS.forEach((key, keyIndex) => {
       PROGRESSIONS.forEach((progression, progressionIndex) => {

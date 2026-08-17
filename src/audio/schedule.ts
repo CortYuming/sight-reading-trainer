@@ -11,6 +11,8 @@ export interface ScheduledNote {
   duration: number
   /** Sounding pitch: guitar notation sounds an octave below what is written. */
   midi: number
+  /** How hard to play it, 0 to 1. */
+  velocity: number
   part: Part
   barIndex: number
   /** Index within the bar: the beat for bass, the event for melody. */
@@ -53,8 +55,26 @@ export function swingRatio(id: SwingId): number {
 /** Bass notes are walked, not held: a touch short of the next beat. */
 const BASS_DURATION = 0.9
 
-/** A sliver of silence between notes so repeated pitches are re-articulated. */
-const ARTICULATION = 0.92
+/** The three weights: an accented note, an ordinary one, one played under. */
+const ACCENT = 1
+const PLAIN = 0.78
+const SOFT = 0.55
+
+/**
+ * How hard a melody note is played.
+ *
+ * Jazz eighths lean on the off-beat rather than the downbeat — weighting the
+ * beat instead makes a line march. And only the eighths are weighted at all: a
+ * sextuplet or a run of sixteenths has nothing metric to lean on, so it comes
+ * out even and takes its shape from the contour of the line, which is what a
+ * player does with it. The bass walks at one weight throughout.
+ */
+function melodyVelocity(startTicks: number, ticks: number, swung: Set<number>): number {
+  if (swung.has(startTicks)) return ACCENT
+  const half = TICKS_PER_BEAT / 2
+  if (ticks === half && startTicks % TICKS_PER_BEAT === 0) return SOFT
+  return PLAIN
+}
 
 /**
  * Delay the off-beat eighth by the swing ratio. Everything else — sixteenths,
@@ -111,6 +131,7 @@ export function scheduleExercise(exercise: Exercise, swing: number): Schedule {
         time: (barStart + beat * TICKS_PER_BEAT) / TICKS_PER_BEAT,
         duration: BASS_DURATION,
         midi: pitch.midi + SOUNDING_OFFSET,
+        velocity: ACCENT,
         part: 'bass',
         barIndex,
         index: beat,
@@ -133,8 +154,13 @@ export function scheduleExercise(exercise: Exercise, swing: number): Schedule {
       const end = beatsAt(barStart + events[last].start + events[last].ticks, swing, swung)
       notes.push({
         time: start,
-        duration: Math.max((end - start) * ARTICULATION, 0.05),
+        // Right up to the next note, with no gap left in front of it. A gap
+        // made every note a separate blip and a run a row of them. The cost is
+        // that two of the same pitch in a row are now told apart by the
+        // envelope retriggering rather than by silence between them.
+        duration: Math.max(end - start, 0.05),
         midi: event.spelled.midi + SOUNDING_OFFSET,
+        velocity: melodyVelocity(barStart + event.start, event.ticks, swung),
         part: 'melody',
         barIndex,
         index: i,

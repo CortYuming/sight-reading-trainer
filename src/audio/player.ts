@@ -2,6 +2,9 @@ import * as Tone from 'tone'
 import type { Exercise } from '../music/exercise'
 import type { Part, ScheduledNote } from './schedule'
 import { scheduleExercise } from './schedule'
+import type { DrumHit } from './drums'
+import { scheduleDrums } from './drums'
+import { BASS_ENVELOPE, MELODY_ENVELOPE, fitEnvelope } from './envelope'
 
 export interface PlayerOptions {
   bpm: number
@@ -10,6 +13,7 @@ export interface PlayerOptions {
   countIn: boolean
   muteBass: boolean
   muteMelody: boolean
+  muteDrums: boolean
   /** Bar to start from. */
   startBar: number
   /** Bar to loop on its own, or null to loop the whole exercise. */
@@ -17,11 +21,34 @@ export interface PlayerOptions {
   onNote: (part: Part, barIndex: number, index: number) => void
   /** Fires as each bar begins, for following the music on screen. */
   onBar: (barIndex: number) => void
+  /**
+   * Fires shortly before the loop wraps back to the top, so the page can go
+   * there ahead of the sound. Arriving at the same moment as the first note
+   * leaves no time to read it.
+   */
+  onWrapSoon: () => void
   /** Fires when playback ends, with the bar it was on so Play can resume there. */
   onStop: (barIndex: number) => void
 }
 
 const COUNT_IN_BEATS = 4
+
+/**
+ * How far before the wrap the page is sent back to the top. One beat: enough to
+ * find the first bar before it sounds, and the beat it costs is one a reader is
+ * already past.
+ */
+const WRAP_LEAD_BEATS = 1
+
+/**
+ * The kit. It is there to be felt rather than listened to, so both voices sit
+ * well under the melody: the ride is a short, dry ping instead of a wash, and
+ * the hi-hat foot is barely more than a tick.
+ */
+const RIDE_PITCH = 300
+const RIDE_LEVEL = 0.5
+const RIDE_ACCENT_LEVEL = 0.8
+const HIHAT_LEVEL = 0.5
 
 interface NoteEvent {
   time: string
@@ -31,6 +58,11 @@ interface NoteEvent {
 interface ClickEvent {
   time: string
   downbeat: boolean
+}
+
+interface DrumEvent {
+  time: string
+  hit: DrumHit
 }
 
 interface BarEvent {
@@ -51,6 +83,9 @@ export class Player {
   private melody: Tone.Synth | null = null
   private click: Tone.NoiseSynth | null = null
   private clickFilter: Tone.Filter | null = null
+  private ride: Tone.MetalSynth | null = null
+  private hihat: Tone.NoiseSynth | null = null
+  private hihatFilter: Tone.Filter | null = null
   private options: PlayerOptions | null = null
   private playing = false
   /** Beats of count-in in front of the music, needed to find bar boundaries. */
@@ -98,6 +133,16 @@ export class Player {
     music.start(0)
     this.parts.push(music)
 
+    const drumEvents: DrumEvent[] = scheduleDrums(exercise.bars.length, options.swing).map(
+      (hit) => ({ time: atBeat(hit.time + offset), hit }),
+    )
+    const drums = new Tone.Part<DrumEvent>(
+      (time, event) => this.playDrum(time, event.hit),
+      drumEvents,
+    )
+    drums.start(0)
+    this.parts.push(drums)
+
     const barEvents: BarEvent[] = exercise.bars.map((_, barIndex) => ({
       time: atBeat(offset + barIndex * BEATS_PER_BAR),
       barIndex,
@@ -107,6 +152,18 @@ export class Player {
     }, barEvents)
     bars.start(0)
     this.parts.push(bars)
+
+    if (beats > WRAP_LEAD_BEATS) {
+      const wrap = new Tone.Part<{ time: string }>((time) => {
+        // The cue sits in the last bar, which is also where a repeat of that
+        // bar goes round — and a bar repeating on itself is already on screen.
+        // Only the whole-exercise loop is going anywhere.
+        if (this.options === null || this.options.loopBar !== null) return
+        Tone.getDraw().schedule(() => this.options?.onWrapSoon(), time)
+      }, [{ time: atBeat(offset + beats - WRAP_LEAD_BEATS) }])
+      wrap.start(0)
+      this.parts.push(wrap)
+    }
 
     const clickEvents: ClickEvent[] = []
     for (let beat = 0; beat < offset; beat++) {
@@ -225,10 +282,11 @@ export class Player {
     Tone.getTransport().bpm.value = bpm
   }
 
-  setMutes(muteBass: boolean, muteMelody: boolean): void {
+  setMutes(muteBass: boolean, muteMelody: boolean, muteDrums: boolean): void {
     if (!this.options) return
     this.options.muteBass = muteBass
     this.options.muteMelody = muteMelody
+    this.options.muteDrums = muteDrums
   }
 
   private playNote(time: number, note: ScheduledNote): void {
@@ -237,12 +295,36 @@ export class Player {
     if (note.part === 'bass' ? options.muteBass : options.muteMelody) return
 
     const instrument = note.part === 'bass' ? this.bass : this.melody
+    if (!instrument) return
+
+    // Re-cut the envelope for this note before it is triggered: the envelope
+    // stages are plain values Tone reads as it schedules the ramps, so setting
+    // them here is what this note gets and the next note can have its own.
+    const seconds = (note.duration * 60) / Tone.getTransport().bpm.value
+    const shape = fitEnvelope(note.part === 'bass' ? BASS_ENVELOPE : MELODY_ENVELOPE, seconds)
+    instrument.envelope.decay = shape.decay
+    instrument.envelope.release = shape.release
+
     const frequency = Tone.Frequency(note.midi, 'midi').toFrequency()
-    instrument?.triggerAttackRelease(frequency, atBeat(note.duration), time)
+    instrument.triggerAttackRelease(frequency, atBeat(note.duration), time, note.velocity)
 
     Tone.getDraw().schedule(() => {
       options.onNote(note.part, note.barIndex, note.index)
     }, time)
+  }
+
+  private playDrum(time: number, hit: DrumHit): void {
+    if (this.options?.muteDrums !== false) return
+    if (hit.voice === 'hihat') {
+      this.hihat?.triggerAttackRelease('64n', time, HIHAT_LEVEL)
+      return
+    }
+    this.ride?.triggerAttackRelease(
+      RIDE_PITCH,
+      '16n',
+      time,
+      hit.accent ? RIDE_ACCENT_LEVEL : RIDE_LEVEL,
+    )
   }
 
   private playClick(time: number, event: ClickEvent): void {
@@ -254,14 +336,33 @@ export class Player {
     // and richer voices made both harder to follow.
     this.bass = new Tone.Synth({
       oscillator: { type: 'sine' },
-      envelope: { attack: 0.005, decay: 0.25, sustain: 0.2, release: 0.3 },
+      envelope: BASS_ENVELOPE,
       volume: -4,
     }).toDestination()
     this.melody = new Tone.Synth({
       oscillator: { type: 'triangle' },
-      envelope: { attack: 0.004, decay: 0.2, sustain: 0.25, release: 0.25 },
-      volume: -8,
+      envelope: MELODY_ENVELOPE,
+      volume: -10,
     }).toDestination()
+
+    // A cymbal is a crowd of inharmonic partials, which is exactly what
+    // MetalSynth makes. The short decay is deliberate: a ride left to ring
+    // washes over the very eighth notes the reader is trying to hear.
+    this.ride = new Tone.MetalSynth({
+      envelope: { attack: 0.001, decay: 0.28, release: 0.05 },
+      harmonicity: 5.1,
+      modulationIndex: 32,
+      resonance: 4000,
+      octaves: 1.2,
+      volume: -30,
+    }).toDestination()
+
+    this.hihatFilter = new Tone.Filter({ frequency: 8000, type: 'highpass' }).toDestination()
+    this.hihat = new Tone.NoiseSynth({
+      noise: { type: 'white' },
+      envelope: { attack: 0.001, decay: 0.02, sustain: 0, release: 0.01 },
+      volume: -22,
+    }).connect(this.hihatFilter)
 
     this.clickFilter = new Tone.Filter({ frequency: 4000, type: 'highpass' }).toDestination()
     this.click = new Tone.NoiseSynth({
@@ -290,6 +391,12 @@ export class Player {
     this.click = null
     this.clickFilter?.dispose()
     this.clickFilter = null
+    this.ride?.dispose()
+    this.ride = null
+    this.hihat?.dispose()
+    this.hihat = null
+    this.hihatFilter?.dispose()
+    this.hihatFilter = null
 
     this.playing = false
   }

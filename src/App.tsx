@@ -31,10 +31,13 @@ export default function App() {
   const [countIn, setCountIn] = useState(saved.countIn)
   const [playBass, setPlayBass] = useState(saved.playBass)
   const [playMelody, setPlayMelody] = useState(saved.playMelody)
+  const [playDrums, setPlayDrums] = useState(saved.playDrums)
   const [showNoteNames, setShowNoteNames] = useState(saved.showNoteNames)
 
   const [playing, setPlaying] = useState(false)
   const [currentBar, setCurrentBar] = useState(0)
+  // Bumped just before the loop wraps, to send the score back to the top early.
+  const [wrapCue, setWrapCue] = useState(0)
   const [barRepeat, setBarRepeat] = useState(false)
   // What the next barline will switch to, while the current bar finishes.
   const [pending, setPending] = useState<PendingMove | null>(null)
@@ -91,6 +94,7 @@ export default function App() {
         countIn: withCountIn,
         muteBass: !playBass,
         muteMelody: !playMelody,
+        muteDrums: !playDrums,
         startBar,
         loopBar,
         onNote: (part, barIndex, index) => {
@@ -99,6 +103,7 @@ export default function App() {
           else setActiveMelody(note)
         },
         onBar: setCurrentBar,
+        onWrapSoon: () => setWrapCue((count) => count + 1),
         onStop: (barIndex) => {
           setPlaying(false)
           setCurrentBar(barIndex)
@@ -107,7 +112,7 @@ export default function App() {
       })
       setPlaying(true)
     },
-    [player, exercise, bpm, swing, playBass, playMelody, clearHighlight],
+    [player, exercise, bpm, swing, playBass, playMelody, playDrums, clearHighlight],
   )
 
   const stop = useCallback(() => {
@@ -193,18 +198,26 @@ export default function App() {
 
   // Tempo and mutes take effect without interrupting playback.
   useEffect(() => player.setBpm(bpm), [player, bpm])
-  useEffect(() => player.setMutes(!playBass, !playMelody), [player, playBass, playMelody])
+  useEffect(
+    () => player.setMutes(!playBass, !playMelody, !playDrums),
+    [player, playBass, playMelody, playDrums],
+  )
 
-  // These change how the whole thing is scheduled, so they need a restart.
+  // Swing changes how the whole thing is scheduled, so it needs a restart —
+  // but the same music carries on from the same bar.
   useEffect(() => {
     if (!player.isPlaying) return
     void play(currentBar, barRepeat ? currentBar : null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [swing, exercise])
+  }, [swing])
 
+  // A new level, key, form or seed is different music. Playing straight on
+  // through it gives nobody a chance to look at it, so stop and go back to the
+  // top and let Play start it.
   useEffect(() => {
+    stop()
     setCurrentBar(0)
-    setPending(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exercise])
 
   useEffect(() => () => player.stop(), [player])
@@ -219,9 +232,21 @@ export default function App() {
       countIn,
       playBass,
       playMelody,
+      playDrums,
       showNoteNames,
     })
-  }, [keyName, progressionId, level, bpm, swing, countIn, playBass, playMelody, showNoteNames])
+  }, [
+    keyName,
+    progressionId,
+    level,
+    bpm,
+    swing,
+    countIn,
+    playBass,
+    playMelody,
+    playDrums,
+    showNoteNames,
+  ])
 
   return (
     <div className="page">
@@ -279,7 +304,10 @@ export default function App() {
           </div>
         </div>
 
-        <div className="toolbar-row">
+        {/* What is being read. Set at the start of a session, not while playing. */}
+        <div className="toolbar-row grouped">
+          <span className="group-label">Exercise</span>
+
           <label className="field">
             <span className="field-label">Key</span>
             <select value={keyName} onChange={(e) => setKeyName(e.target.value)}>
@@ -322,22 +350,6 @@ export default function App() {
             </select>
           </label>
 
-          <label className="field">
-            <span className="field-label">Swing</span>
-            <select value={swing} onChange={(e) => setSwing(e.target.value as SwingId)}>
-              {SWING_SETTINGS.map((setting) => (
-                <option key={setting.id} value={setting.id}>
-                  {setting.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <Chip label="Count-in" checked={countIn} onChange={setCountIn} />
-          <Chip label="Bass" checked={playBass} onChange={setPlayBass} />
-          <Chip label="Melody" checked={playMelody} onChange={setPlayMelody} />
-          <Chip label="Note names" checked={showNoteNames} onChange={setShowNoteNames} />
-
           <button type="button" className="btn" onClick={() => setSeed(randomSeed())}>
             &#8635; New
           </button>
@@ -353,12 +365,38 @@ export default function App() {
             </select>
           </label>
         </div>
+
+        {/* How it comes out — what is heard, and then what is drawn. */}
+        <div className="toolbar-row grouped">
+          <span className="group-label">Sound</span>
+
+          <label className="field">
+            <span className="field-label">Swing</span>
+            <select value={swing} onChange={(e) => setSwing(e.target.value as SwingId)}>
+              {SWING_SETTINGS.map((setting) => (
+                <option key={setting.id} value={setting.id}>
+                  {setting.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <Chip label="Count-in" checked={countIn} onChange={setCountIn} />
+          <Chip label="Bass" checked={playBass} onChange={setPlayBass} />
+          <Chip label="Melody" checked={playMelody} onChange={setPlayMelody} />
+          <Chip label="Drums" checked={playDrums} onChange={setPlayDrums} />
+
+          <span className="group-divider" aria-hidden="true" />
+          <span className="group-label">View</span>
+          <Chip label="Note names" checked={showNoteNames} onChange={setShowNoteNames} />
+        </div>
       </header>
 
       <main className="app">
         <Score
           exercise={exercise}
           currentBar={currentBar}
+          wrapCue={wrapCue}
           pendingBar={pending?.bar ?? null}
           activeBass={activeBass}
           activeMelody={activeMelody}

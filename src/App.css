@@ -23,6 +23,37 @@
   gap: 0.4rem 0.6rem;
 }
 
+/*
+ * The toolbar reads top to bottom by how often a control is touched: the
+ * transport while playing, then what is being read, then how it comes out. The
+ * rules are what stop the three from running together into one bank of
+ * controls, which is what they had become.
+ */
+.toolbar-row.grouped {
+  border-top: 1px solid var(--border);
+  padding-top: 0.4rem;
+}
+
+.group-label {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  /* Enough for the longest of them, so the groups start on the same column. */
+  min-width: 4.4rem;
+}
+
+/* A second group sharing a row: a rule instead of a heading of its own. */
+.group-divider {
+  align-self: stretch;
+  border-left: 1px solid var(--border);
+}
+
+.group-divider + .group-label {
+  min-width: 0;
+}
+
 .field {
   display: inline-flex;
   align-items: center;
@@ -317,5 +348,15 @@ select {
 
   .field-label {
     font-size: 0.68rem;
+  }
+
+  /* Too narrow to hold a column of headings: each one takes its own line. */
+  .group-label,
+  .group-divider + .group-label {
+    min-width: 100%;
+  }
+
+  .group-divider {
+    display: none;
   }
 }

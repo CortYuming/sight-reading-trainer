@@ -19,6 +19,8 @@ export interface ActiveNote {
 interface ScoreProps {
   exercise: Exercise
   currentBar: number
+  /** Changes just before the loop wraps, as the cue to go back to the top. */
+  wrapCue: number
   /** Bar the music will switch to at the next barline, if one is queued. */
   pendingBar: number | null
   activeBass: ActiveNote | null
@@ -31,6 +33,7 @@ interface ScoreProps {
 export function Score({
   exercise,
   currentBar,
+  wrapCue,
   pendingBar,
   activeBass,
   activeMelody,
@@ -51,9 +54,25 @@ export function Score({
   )
 
   // Keep the bar being played in view, so nobody has to chase it by scrolling.
+  // Stepping to a neighbour glides; a jump across the score does not, because a
+  // smooth scroll of that length is still travelling when the bar has started.
+  const shown = useRef(currentBar)
   useEffect(() => {
-    rows.current[currentBar]?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    const far = Math.abs(currentBar - shown.current) > 1
+    shown.current = currentBar
+    rows.current[currentBar]?.scrollIntoView({
+      block: 'center',
+      behavior: far ? 'auto' : 'smooth',
+    })
   }, [currentBar])
+
+  // A beat before the music wraps, so the top of the score is there to be read
+  // rather than arriving with the note.
+  useEffect(() => {
+    if (wrapCue === 0) return
+    shown.current = 0
+    rows.current[0]?.scrollIntoView({ block: 'center', behavior: 'auto' })
+  }, [wrapCue])
 
   const available = Math.max(width - COLUMN_GAP, MIN_BASS_WIDTH + MIN_MELODY_WIDTH)
   const bassWidth = Math.max(MIN_BASS_WIDTH, Math.floor(available * BASS_SHARE))
@@ -82,6 +101,8 @@ export function Score({
                 showNoteNames={showNoteNames}
                 width={bassWidth}
                 activeIndex={activeBass?.barIndex === i ? activeBass.index : null}
+                repeatBegin={i === 0}
+                repeatEnd={i === bars.length - 1}
               />
             )}
           </div>
@@ -95,6 +116,8 @@ export function Score({
                 showNoteNames={showNoteNames}
                 width={melodyWidth}
                 activeIndex={activeMelody?.barIndex === i ? activeMelody.index : null}
+                repeatBegin={i === 0}
+                repeatEnd={i === bars.length - 1}
               />
             )}
           </div>

@@ -23,6 +23,7 @@ export interface Settings {
   countIn: boolean
   playBass: boolean
   playMelody: boolean
+  playDrums: boolean
   showNoteNames: boolean
 }
 
@@ -31,12 +32,13 @@ export const DEFAULT_SETTINGS: Settings = {
   progressionId: 'blues',
   level: 2,
   bpm: 60,
-  // Deep by default: at the slow tempo this page starts at, that is the ratio
-  // jazz players actually land on.
-  swing: 'deep',
+  // Medium by default: the 2:1 triplet feel the notation itself implies, which
+  // is the least ambiguous thing to read against.
+  swing: 'medium',
   countIn: true,
   playBass: true,
   playMelody: true,
+  playDrums: true,
   // Off by default: reading the pitch off the staff is the exercise, so the
   // letters are there to fall back on rather than to read instead.
   showNoteNames: false,
@@ -84,6 +86,7 @@ export function readSettings(stored: unknown): Settings {
     countIn: boolean(raw.countIn, DEFAULT_SETTINGS.countIn),
     playBass: boolean(raw.playBass, DEFAULT_SETTINGS.playBass),
     playMelody: boolean(raw.playMelody, DEFAULT_SETTINGS.playMelody),
+    playDrums: boolean(raw.playDrums, DEFAULT_SETTINGS.playDrums),
     showNoteNames: boolean(raw.showNoteNames, DEFAULT_SETTINGS.showNoteNames),
   }
 }

@@ -1,5 +1,6 @@
 import {
   Accidental,
+  BarlineType,
   Beam,
   Dot,
   Formatter,
@@ -38,6 +39,12 @@ export interface MeasureOptions {
   showHeader: boolean
   /** Write each note's letter name beside its head, as a reading aid. */
   showNoteNames: boolean
+  /**
+   * Repeat barlines. Playback runs round and round, so the first bar opens the
+   * repeat and the last one closes it, the way the loop would be written out.
+   */
+  repeatBegin?: boolean
+  repeatEnd?: boolean
 }
 
 /** Vertical extent of everything drawn, used to check nothing is clipped. */
@@ -57,6 +64,8 @@ export function drawMeasure(container: HTMLElement, options: MeasureOptions): Me
   const context = renderer.getContext()
 
   const stave = new Stave(0, STAVE_TOP, options.width - 2)
+  if (options.repeatBegin) stave.setBegBarType(BarlineType.REPEAT_BEGIN)
+  if (options.repeatEnd) stave.setEndBarType(BarlineType.REPEAT_END)
   if (options.showHeader) {
     stave.addClef('treble', 'default', '8vb')
     stave.addKeySignature(options.keySignature)
