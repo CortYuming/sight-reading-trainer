@@ -252,8 +252,20 @@ built: their degrees wait on transcribing more of the book than the one staff
 per category read so far.
 
 A shape level's number does not say what it asks for, so the level menu names
-its figures — `11 — 3 note: up-up` — where a rhythm level shows a digit and
-nothing else.
+its figures where a rhythm level shows a digit and nothing else. The length
+sits on the group and the direction on the line, since the length is the same
+down a group and the direction is what differs:
+
+```
+Rhythm — basics       1 2 3 4 5 6
+Rhythm — mixed        7 8 9 10
+Shapes — three note   11 — up-up  …  15 — all four (11-14)
+Shapes — four note    16 — up-up-up  …  22 — all six (16-21)
+```
+
+The groups say what is being practised rather than how hard it is. The shape
+levels are not a harder kind of mixed rhythm — they are the other axis, and
+labelling 7-10 "advanced" made one ladder of what is two.
 
 Two note shapes are left out. One interval is nothing to read, the same reason
 a plain quarter is kept out of the rhythm pool.

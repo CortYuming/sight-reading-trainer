@@ -1,5 +1,6 @@
 import type { ChordSymbol } from './chord'
 import type { Level } from './rhythm'
+import { LEVELS } from './rhythm'
 import { scalePitchClasses } from './chord'
 import { MELODY_RANGE, pitchClass, pitchesWithClass } from './pitch'
 
@@ -130,18 +131,47 @@ export function shapesFor(level: Level): readonly Shape[] | null {
   return SHAPES_BY_LEVEL[level] ?? null
 }
 
+const COUNTS = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight']
+
+/**
+ * The shape levels, gathered by how many notes their shapes have, for the
+ * level menu to group them under.
+ *
+ * The length belongs on the group rather than on every line of it: it is the
+ * same for all of them, and repeating it leaves no room for the direction,
+ * which is the thing that differs.
+ */
+export function shapeGroups(): Array<{ label: string; levels: Level[] }> {
+  const byLength = new Map<number, Level[]>()
+  for (const level of LEVELS) {
+    const shapes = shapesFor(level)
+    if (!shapes) continue
+    const length = shapes[0].degrees.length
+    byLength.set(length, [...(byLength.get(length) ?? []), level])
+  }
+  return [...byLength].map(([length, levels]) => ({
+    label: `Shapes — ${COUNTS[length]} note`,
+    levels,
+  }))
+}
+
 /**
  * What a shape level is, for the level menu. The rhythm levels are numbers
  * because a number is all they are, but a shape level is a named figure to
  * practise, and the name is what tells the reader what to expect.
+ *
+ * A level that mixes names the levels it gathers instead of listing every
+ * direction it holds, which would run to a line no menu has room for.
  */
 export function shapeSummary(level: Level): string {
   const shapes = shapesFor(level)
   if (!shapes) return ''
-  const lengths = new Set(shapes.map((s) => s.degrees.length))
-  const size = lengths.size === 1 ? `${shapes[0].degrees.length} note` : 'mixed'
-  // A direction holds several shapes; the menu wants the direction, once.
-  return `${size}: ${[...new Set(shapes.map((s) => s.id))].join(', ')}`
+  const directions = [...new Set(shapes.map((s) => s.id))]
+  if (directions.length === 1) return directions[0]
+  const gathered = (shapeGroups().find((g) => g.levels.includes(level))?.levels ?? []).filter(
+    (l) => l !== level,
+  )
+  return `all ${COUNTS[directions.length]} (${gathered[0]}-${gathered[gathered.length - 1]})`
 }
 
 const HOME = Math.round((MELODY_RANGE.min + MELODY_RANGE.max) / 2)

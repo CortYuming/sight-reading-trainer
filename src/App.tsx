@@ -5,7 +5,7 @@ import type { SwingId } from './audio/schedule'
 import { generateExercise } from './music/exercise'
 import { PROGRESSIONS } from './music/progression'
 import { KEYS } from './music/pitch'
-import { shapeSummary } from './music/shape'
+import { shapeGroups, shapeSummary } from './music/shape'
 import { SWING_SETTINGS, swingRatio } from './audio/schedule'
 import { Player } from './audio/player'
 import { Score } from './components/Score'
@@ -350,27 +350,35 @@ export default function App() {
                 setSeed(randomSeed())
               }}
             >
-              <optgroup label="Basics">
+              {/*
+                Grouped by what is being practised rather than by how hard it
+                is. The shape levels are not a harder version of the mixed
+                rhythms — they are the other axis, and calling 7-10 "advanced"
+                made the ladder look like one thing when it is two.
+              */}
+              <optgroup label="Rhythm — basics">
                 {LEVELS.filter((l) => !isMixed(l)).map((l) => (
                   <option key={l} value={l}>
                     {l}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="Advanced">
+              <optgroup label="Rhythm — mixed">
                 {LEVELS.filter((l) => isMixed(l) && !hasShape(l)).map((l) => (
                   <option key={l} value={l}>
                     {l}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="Shapes">
-                {LEVELS.filter(hasShape).map((l) => (
-                  <option key={l} value={l}>
-                    {l} — {shapeSummary(l)}
-                  </option>
-                ))}
-              </optgroup>
+              {shapeGroups().map((group) => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.levels.map((l) => (
+                    <option key={l} value={l}>
+                      {l} — {shapeSummary(l)}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </label>
 
