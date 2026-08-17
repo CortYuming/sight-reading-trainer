@@ -16,6 +16,9 @@ import './App.css'
 
 const randomSeed = () => Math.floor(Math.random() * 1_000_000)
 
+/** What the player should loop: the one bar being repeated, or the lot. */
+const loopFor = (bar: number, repeat: boolean): number | null => (repeat ? bar : null)
+
 export default function App() {
   const savedRef = useRef<Settings | null>(null)
   savedRef.current ??= loadSettings()
@@ -122,6 +125,12 @@ export default function App() {
     clearHighlight()
   }, [player, clearHighlight])
 
+  // Where the music will be once anything queued has landed. Every move reads
+  // from here rather than from what is sounding, so repeated presses keep
+  // moving instead of all stepping off the same bar.
+  const nextBar = pending?.bar ?? currentBar
+  const nextRepeat = pending?.repeat ?? barRepeat
+
   /** Moves land on the next barline, so the bar being read is never cut off. */
   const queueMove = useCallback(
     (bar: number, repeat: boolean) => {
@@ -134,7 +143,7 @@ export default function App() {
       setPending({ bar, repeat })
       player.queueAtBarEnd(() => {
         setPending(null)
-        player.moveTo(bar, repeat ? bar : null)
+        player.moveTo(bar, loopFor(bar, repeat))
       })
     },
     [player],
@@ -144,28 +153,23 @@ export default function App() {
   // where Play will start from.
   const goToBar = useCallback(
     (bar: number) => {
-      const from = pending?.bar ?? currentBar
       const target = Math.max(0, Math.min(bar, barCount - 1))
-      if (target === from && pending === null) return
-      queueMove(target, pending?.repeat ?? barRepeat)
+      if (target === nextBar && pending === null) return
+      queueMove(target, nextRepeat)
     },
-    [barCount, queueMove, pending, currentBar, barRepeat],
+    [barCount, queueMove, pending, nextBar, nextRepeat],
   )
 
-  /** Step from whatever is queued, so repeated presses keep moving. */
-  const stepBar = useCallback(
-    (delta: number) => goToBar((pending?.bar ?? currentBar) + delta),
-    [goToBar, pending, currentBar],
-  )
+  const stepBar = useCallback((delta: number) => goToBar(nextBar + delta), [goToBar, nextBar])
 
-  const toggleBarRepeat = useCallback(() => {
-    const repeating = pending?.repeat ?? barRepeat
-    queueMove(pending?.bar ?? currentBar, !repeating)
-  }, [queueMove, pending, barRepeat, currentBar])
+  const toggleBarRepeat = useCallback(
+    () => queueMove(nextBar, !nextRepeat),
+    [queueMove, nextBar, nextRepeat],
+  )
 
   const toggle = useCallback(() => {
     if (playing) stop()
-    else void play(currentBar, barRepeat ? currentBar : null, countIn)
+    else void play(currentBar, loopFor(currentBar, barRepeat), countIn)
   }, [playing, stop, play, currentBar, barRepeat, countIn])
 
   useEffect(() => {
@@ -207,7 +211,7 @@ export default function App() {
   // but the same music carries on from the same bar.
   useEffect(() => {
     if (!player.isPlaying) return
-    void play(currentBar, barRepeat ? currentBar : null)
+    void play(currentBar, loopFor(currentBar, barRepeat))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [swing])
 

@@ -5,7 +5,11 @@ import type { Rng } from './random'
  * both 4 (sixteenths) and 3 (triplets), so every duration stays an integer.
  */
 export const TICKS_PER_BEAT = 12
-export const TICKS_PER_BAR = TICKS_PER_BEAT * 4
+
+/** Every exercise is in 4/4, and this is the one place that says so. */
+export const BEATS_PER_BAR = 4
+
+export const TICKS_PER_BAR = TICKS_PER_BEAT * BEATS_PER_BAR
 
 /**
  * Levels 1-6 are the basics: each brings a handful of new shapes, one rhythm

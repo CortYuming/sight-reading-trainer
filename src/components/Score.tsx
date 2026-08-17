@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { Exercise } from '../music/exercise'
 import { bassSpecs, melodySpecs } from '../notation/spec'
 import { useElementWidth } from '../hooks/useElementWidth'
@@ -53,26 +53,24 @@ export function Score({
     [exercise],
   )
 
+  const shown = useRef(currentBar)
+  const show = useCallback((bar: number, behavior: ScrollBehavior) => {
+    shown.current = bar
+    rows.current[bar]?.scrollIntoView({ block: 'center', behavior })
+  }, [])
+
   // Keep the bar being played in view, so nobody has to chase it by scrolling.
   // Stepping to a neighbour glides; a jump across the score does not, because a
   // smooth scroll of that length is still travelling when the bar has started.
-  const shown = useRef(currentBar)
   useEffect(() => {
-    const far = Math.abs(currentBar - shown.current) > 1
-    shown.current = currentBar
-    rows.current[currentBar]?.scrollIntoView({
-      block: 'center',
-      behavior: far ? 'auto' : 'smooth',
-    })
-  }, [currentBar])
+    show(currentBar, Math.abs(currentBar - shown.current) > 1 ? 'auto' : 'smooth')
+  }, [currentBar, show])
 
   // A beat before the music wraps, so the top of the score is there to be read
   // rather than arriving with the note.
   useEffect(() => {
-    if (wrapCue === 0) return
-    shown.current = 0
-    rows.current[0]?.scrollIntoView({ block: 'center', behavior: 'auto' })
-  }, [wrapCue])
+    if (wrapCue > 0) show(0, 'auto')
+  }, [wrapCue, show])
 
   const available = Math.max(width - COLUMN_GAP, MIN_BASS_WIDTH + MIN_MELODY_WIDTH)
   const bassWidth = Math.max(MIN_BASS_WIDTH, Math.floor(available * BASS_SHARE))

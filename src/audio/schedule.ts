@@ -1,6 +1,6 @@
 import type { Exercise } from '../music/exercise'
 import { SOUNDING_OFFSET } from '../music/pitch'
-import { TICKS_PER_BAR, TICKS_PER_BEAT } from '../music/rhythm'
+import { BEATS_PER_BAR, TICKS_PER_BAR, TICKS_PER_BEAT } from '../music/rhythm'
 
 export type Part = 'bass' | 'melody'
 
@@ -170,5 +170,5 @@ export function scheduleExercise(exercise: Exercise, swing: number): Schedule {
   })
 
   notes.sort((a, b) => a.time - b.time)
-  return { notes, beats: exercise.bars.length * 4 }
+  return { notes, beats: exercise.bars.length * BEATS_PER_BAR }
 }

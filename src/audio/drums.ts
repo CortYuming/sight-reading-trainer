@@ -1,3 +1,5 @@
+import { BEATS_PER_BAR } from '../music/rhythm'
+
 export type DrumVoice = 'ride' | 'hihat'
 
 export interface DrumHit {
@@ -7,8 +9,6 @@ export interface DrumHit {
   /** The strokes a drummer leans on, played a little harder. */
   accent: boolean
 }
-
-const BEATS_PER_BAR = 4
 
 /** Two and four: the beats the ride leans on and the hi-hat foot closes. */
 const BACKBEATS = [1, 3]

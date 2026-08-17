@@ -1,5 +1,6 @@
 import * as Tone from 'tone'
 import type { Exercise } from '../music/exercise'
+import { BEATS_PER_BAR } from '../music/rhythm'
 import type { Part, ScheduledNote } from './schedule'
 import { scheduleExercise } from './schedule'
 import type { DrumHit } from './drums'
@@ -70,7 +71,19 @@ interface BarEvent {
   barIndex: number
 }
 
-const BEATS_PER_BAR = 4
+/**
+ * Every voice built for one run of the player. `nodes` holds all of them and
+ * the filters behind them, so tearing down is one loop rather than a line per
+ * voice that has to be remembered when a new one is added.
+ */
+interface Kit {
+  bass: Tone.Synth
+  melody: Tone.Synth
+  ride: Tone.MetalSynth
+  hihat: Tone.NoiseSynth
+  click: Tone.NoiseSynth
+  nodes: Tone.ToneAudioNode[]
+}
 
 /** Tone takes tick counts written with an "i" suffix, and those follow tempo. */
 function atBeat(beats: number): string {
@@ -79,13 +92,7 @@ function atBeat(beats: number): string {
 
 export class Player {
   private parts: Tone.Part[] = []
-  private bass: Tone.Synth | null = null
-  private melody: Tone.Synth | null = null
-  private click: Tone.NoiseSynth | null = null
-  private clickFilter: Tone.Filter | null = null
-  private ride: Tone.MetalSynth | null = null
-  private hihat: Tone.NoiseSynth | null = null
-  private hihatFilter: Tone.Filter | null = null
+  private kit: Kit | null = null
   private options: PlayerOptions | null = null
   private playing = false
   /** Beats of count-in in front of the music, needed to find bar boundaries. */
@@ -95,6 +102,19 @@ export class Player {
 
   get isPlaying(): boolean {
     return this.playing
+  }
+
+  /**
+   * The two figures every seek and every bar count is worked out from. Ticks
+   * per quarter note is a transport setting, so neither can be a constant.
+   */
+  private get ticksPerBar(): number {
+    return BEATS_PER_BAR * Tone.getTransport().PPQ
+  }
+
+  /** Where the music starts, past any count-in in front of it. */
+  private get offsetTicks(): number {
+    return this.offsetBeats * Tone.getTransport().PPQ
   }
 
   async start(exercise: Exercise, options: PlayerOptions): Promise<void> {
@@ -107,7 +127,7 @@ export class Player {
     // Swing is baked into the schedule, so the transport must not add its own.
     transport.swing = 0
 
-    this.buildInstruments()
+    this.kit = this.buildInstruments()
 
     const { notes, beats } = scheduleExercise(exercise, options.swing)
 
@@ -200,12 +220,9 @@ export class Player {
 
   /** The bar the transport is in now, counted past any count-in. */
   private currentBar(): number {
-    const transport = Tone.getTransport()
-    const ticksPerBar = BEATS_PER_BAR * transport.PPQ
-    const offsetTicks = this.offsetBeats * transport.PPQ
-    const played = transport.ticks - offsetTicks
+    const played = Tone.getTransport().ticks - this.offsetTicks
     if (played <= 0) return 0
-    const bars = Math.floor(played / ticksPerBar)
+    const bars = Math.floor(played / this.ticksPerBar)
     return Math.min(bars, Math.floor(this.totalBeats / BEATS_PER_BAR) - 1)
   }
 
@@ -243,8 +260,7 @@ export class Player {
   moveTo(startBar: number, loopBar: number | null): void {
     if (!this.playing) return
     const transport = Tone.getTransport()
-    const ticksPerBar = BEATS_PER_BAR * transport.PPQ
-    const offsetTicks = this.offsetBeats * transport.PPQ
+    const { ticksPerBar, offsetTicks } = this
 
     const loopStart = offsetTicks + (loopBar === null ? 0 : loopBar * ticksPerBar)
     const loopEnd =
@@ -269,11 +285,10 @@ export class Player {
   }
 
   private nextBarBoundaryTicks(): number {
-    const transport = Tone.getTransport()
-    const ticksPerBar = BEATS_PER_BAR * transport.PPQ
-    const offsetTicks = this.offsetBeats * transport.PPQ
-    if (transport.ticks < offsetTicks) return offsetTicks
-    const barsDone = Math.floor((transport.ticks - offsetTicks) / ticksPerBar)
+    const { ticksPerBar, offsetTicks } = this
+    const ticks = Tone.getTransport().ticks
+    if (ticks < offsetTicks) return offsetTicks
+    const barsDone = Math.floor((ticks - offsetTicks) / ticksPerBar)
     return offsetTicks + (barsDone + 1) * ticksPerBar
   }
 
@@ -289,19 +304,25 @@ export class Player {
     this.options.muteDrums = muteDrums
   }
 
+  /** Which voice plays a line, how it is tuned, and whether it is muted. */
+  private voiceFor(part: Part, options: PlayerOptions, kit: Kit) {
+    return part === 'bass'
+      ? { instrument: kit.bass, base: BASS_ENVELOPE, muted: options.muteBass }
+      : { instrument: kit.melody, base: MELODY_ENVELOPE, muted: options.muteMelody }
+  }
+
   private playNote(time: number, note: ScheduledNote): void {
     const options = this.options
-    if (!options) return
-    if (note.part === 'bass' ? options.muteBass : options.muteMelody) return
+    if (options === null || this.kit === null) return
 
-    const instrument = note.part === 'bass' ? this.bass : this.melody
-    if (!instrument) return
+    const { instrument, base, muted } = this.voiceFor(note.part, options, this.kit)
+    if (muted) return
 
     // Re-cut the envelope for this note before it is triggered: the envelope
     // stages are plain values Tone reads as it schedules the ramps, so setting
     // them here is what this note gets and the next note can have its own.
     const seconds = (note.duration * 60) / Tone.getTransport().bpm.value
-    const shape = fitEnvelope(note.part === 'bass' ? BASS_ENVELOPE : MELODY_ENVELOPE, seconds)
+    const shape = fitEnvelope(base, seconds)
     instrument.envelope.decay = shape.decay
     instrument.envelope.release = shape.release
 
@@ -314,12 +335,14 @@ export class Player {
   }
 
   private playDrum(time: number, hit: DrumHit): void {
-    if (this.options?.muteDrums !== false) return
+    const options = this.options
+    if (options === null || options.muteDrums || this.kit === null) return
+
     if (hit.voice === 'hihat') {
-      this.hihat?.triggerAttackRelease('64n', time, HIHAT_LEVEL)
+      this.kit.hihat.triggerAttackRelease('64n', time, HIHAT_LEVEL)
       return
     }
-    this.ride?.triggerAttackRelease(
+    this.kit.ride.triggerAttackRelease(
       RIDE_PITCH,
       '16n',
       time,
@@ -328,18 +351,18 @@ export class Player {
   }
 
   private playClick(time: number, event: ClickEvent): void {
-    this.click?.triggerAttackRelease('32n', time, event.downbeat ? 1 : 0.5)
+    this.kit?.click.triggerAttackRelease('32n', time, event.downbeat ? 1 : 0.5)
   }
 
-  private buildInstruments(): void {
+  private buildInstruments(): Kit {
     // Plain synths on purpose: the pitch and the rhythm have to be obvious,
     // and richer voices made both harder to follow.
-    this.bass = new Tone.Synth({
+    const bass = new Tone.Synth({
       oscillator: { type: 'sine' },
       envelope: BASS_ENVELOPE,
       volume: -4,
     }).toDestination()
-    this.melody = new Tone.Synth({
+    const melody = new Tone.Synth({
       oscillator: { type: 'triangle' },
       envelope: MELODY_ENVELOPE,
       volume: -10,
@@ -348,7 +371,7 @@ export class Player {
     // A cymbal is a crowd of inharmonic partials, which is exactly what
     // MetalSynth makes. The short decay is deliberate: a ride left to ring
     // washes over the very eighth notes the reader is trying to hear.
-    this.ride = new Tone.MetalSynth({
+    const ride = new Tone.MetalSynth({
       envelope: { attack: 0.001, decay: 0.28, release: 0.05 },
       harmonicity: 5.1,
       modulationIndex: 32,
@@ -357,19 +380,28 @@ export class Player {
       volume: -30,
     }).toDestination()
 
-    this.hihatFilter = new Tone.Filter({ frequency: 8000, type: 'highpass' }).toDestination()
-    this.hihat = new Tone.NoiseSynth({
+    const hihatFilter = new Tone.Filter({ frequency: 8000, type: 'highpass' }).toDestination()
+    const hihat = new Tone.NoiseSynth({
       noise: { type: 'white' },
       envelope: { attack: 0.001, decay: 0.02, sustain: 0, release: 0.01 },
       volume: -22,
-    }).connect(this.hihatFilter)
+    }).connect(hihatFilter)
 
-    this.clickFilter = new Tone.Filter({ frequency: 4000, type: 'highpass' }).toDestination()
-    this.click = new Tone.NoiseSynth({
+    const clickFilter = new Tone.Filter({ frequency: 4000, type: 'highpass' }).toDestination()
+    const click = new Tone.NoiseSynth({
       noise: { type: 'white' },
       envelope: { attack: 0.001, decay: 0.03, sustain: 0, release: 0.01 },
       volume: -10,
-    }).connect(this.clickFilter)
+    }).connect(clickFilter)
+
+    return {
+      bass,
+      melody,
+      ride,
+      hihat,
+      click,
+      nodes: [bass, melody, ride, hihat, click, hihatFilter, clickFilter],
+    }
   }
 
   private teardown(): void {
@@ -383,20 +415,8 @@ export class Player {
     for (const part of this.parts) part.dispose()
     this.parts = []
 
-    this.bass?.dispose()
-    this.bass = null
-    this.melody?.dispose()
-    this.melody = null
-    this.click?.dispose()
-    this.click = null
-    this.clickFilter?.dispose()
-    this.clickFilter = null
-    this.ride?.dispose()
-    this.ride = null
-    this.hihat?.dispose()
-    this.hihat = null
-    this.hihatFilter?.dispose()
-    this.hihatFilter = null
+    for (const node of this.kit?.nodes ?? []) node.dispose()
+    this.kit = null
 
     this.playing = false
   }
