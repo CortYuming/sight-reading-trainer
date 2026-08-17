@@ -115,7 +115,9 @@ phone. There is no time signature — every exercise is in 4/4.
   | 9 | all of them |
   | 10 | all of them, and ties across the beat |
 
-- From level 11 the rhythm stops climbing — it stays at what 10 draws — and the
+- From level 11 the rhythm steps back — plain divisions of a beat, and a good
+  deal of silence, so that a bar runs to five or six notes rather than twelve
+  and the eye can see where one figure ends — and the
   pitches take over. The melody is built from **melodic shapes** after Jerry
   Bergonzi: one small cell of scale degrees per bar, repeated across the beats
   and moved on a degree each time, so a bar reads as a sequence rather than as

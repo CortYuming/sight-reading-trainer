@@ -228,8 +228,13 @@ Because a bar carries one chord, a shape never straddles a chord change.
 Shapes carry on the same staircase rather than standing beside it. A second
 control would hand the reader a grid — level 7 against a four note shape — and
 leave them to work out what the combination is for, which is the design's job.
-So the levels run on from 10, the rhythm held at what level 10 already draws,
-and only the pitches climb:
+So the levels run on from 10 and only the pitches climb. The rhythm steps back
+rather than staying where it was: held at what level 10 draws, a bar came out
+at twelve or fourteen notes against the 4.3 that every staff of pages 4-13
+averages, and the cells ran into each other and read as a scale. The shape
+levels draw from the plainest divisions of a beat, with silence six times in a
+pool of sixteen, and no more than half a bar of it. Five or six notes to a bar,
+and the room between the figures is what shows where each one ends.
 
 One direction to a level, then the four of them together. That is how the book
 teaches them — an exercise per direction — and how this app already works: a

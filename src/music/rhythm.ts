@@ -15,8 +15,8 @@ export const TICKS_PER_BAR = TICKS_PER_BEAT * BEATS_PER_BAR
  * Levels 1-6 are the basics: each brings a handful of new shapes, one rhythm
  * per bar, repeated across the beats. Levels 7-10 mix everything learned, with
  * the beats drawn one at a time, and the last of them adds ties. From 11 the
- * rhythm stops climbing — it stays at what 10 draws — and the melodic shapes
- * take over as what gets harder.
+ * rhythm steps back to plain divisions and a good deal of silence, and the
+ * melodic shapes take over as what gets harder.
  */
 // prettier-ignore
 export type Level =
@@ -32,7 +32,7 @@ export const LEVELS: readonly Level[] = Array.from(
 /** Where the basics end and everything comes back mixed. */
 export const BASIC_LEVELS = 6
 
-/** Where the rhythm stops climbing and the pitches take over. */
+/** Where the rhythm steps back and the pitches take over. */
 export const RHYTHM_LEVELS = 10
 
 /** Beats drawn one at a time instead of one shape repeated through the bar. */
@@ -220,7 +220,46 @@ export const BEAT_PATTERNS: BeatPattern[] = [
   },
 ]
 
+/**
+ * A beat of silence. No rhythm level draws one — a bar of them would be a bar
+ * of nothing to read — but the shape levels need the room. In the book a bar
+ * carries a cell or two and rests through the remainder, and that space is
+ * what lets the eye see where one figure ends and the next begins.
+ */
+const REST_BEAT: BeatPattern = { id: 'rq', level: 1, notes: [{ dur: 'q', rest: true }] }
+
+/**
+ * How many of the beats in the shape pool are silent. Six against ten sounding
+ * patterns puts a bar at about five notes, which is where the transcriptions
+ * sit: every staff of pages 4-13 averages 4.3 notes to the bar.
+ */
+const SILENT_BEATS = 6
+
+/**
+ * What the shape levels draw a beat from: the plainest divisions, their
+ * rest-carrying answers, and a good deal of silence. Held at what level 10
+ * draws, a bar came out at twelve or fourteen notes and the cells ran together
+ * into a scale — the room between them is what shows where a figure ends.
+ */
+const SHAPE_PATTERNS: BeatPattern[] = [
+  ...Array.from({ length: SILENT_BEATS }, () => REST_BEAT),
+  ...BEAT_PATTERNS.filter((p) => p.level <= 2),
+]
+
 const hasRest = (pattern: BeatPattern): boolean => pattern.notes.some((n) => n.rest)
+
+const isSilent = (pattern: BeatPattern): boolean => pattern.notes.every((n) => n.rest)
+
+/**
+ * Whether to draw again. Beat 1 always sounds, so the bar has a downbeat to
+ * come in on, and no more than half a bar is silence — three silent beats out
+ * of the shape pool would leave a bar with one note in it, which is not a bar
+ * anyone is reading.
+ */
+function unwanted(pattern: BeatPattern, beat: number, chosen: BeatPattern[]): boolean {
+  if (beat === 0) return pattern.notes[0].rest ?? false
+  return isSilent(pattern) && chosen.filter(isSilent).length >= 2
+}
 
 /**
  * A basic level brings only its own shapes: carrying the earlier ones along
@@ -229,6 +268,7 @@ const hasRest = (pattern: BeatPattern): boolean => pattern.notes.some((n) => n.r
  * the rest-free half, then the rest-carrying half, then the lot.
  */
 export function patternsFor(level: Level): BeatPattern[] {
+  if (hasShape(level)) return SHAPE_PATTERNS
   if (!isMixed(level)) return BEAT_PATTERNS.filter((p) => p.level === level)
   if (level === 7) return BEAT_PATTERNS.filter((p) => !hasRest(p))
   if (level === 8) return BEAT_PATTERNS.filter(hasRest)
@@ -255,7 +295,7 @@ export function generateBarRhythm(level: Level, rng: Rng): BarEvent[] {
   if (isMixed(level)) {
     for (let beat = 0; beat < 4; beat++) {
       let pattern = rng.pick(pool)
-      for (let retry = 0; beat === 0 && pattern.notes[0].rest && retry < 4; retry++) {
+      for (let retry = 0; retry < 4 && unwanted(pattern, beat, beats); retry++) {
         pattern = rng.pick(pool)
       }
       beats.push(pattern)
