@@ -110,6 +110,15 @@ select {
   text-overflow: ellipsis;
 }
 
+/*
+ * A shape level names its figures, which is a good deal longer than a rhythm
+ * level's single digit. Cap it so that one long option cannot stretch the row.
+ */
+.field.level select {
+  max-width: 12rem;
+  text-overflow: ellipsis;
+}
+
 .btn {
   cursor: pointer;
 }

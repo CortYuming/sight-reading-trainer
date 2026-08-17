@@ -14,7 +14,7 @@ function build(level: Level, seed: number, progressionIndex = 0, keyIndex = 0) {
   const chords = buildProgression(PROGRESSIONS[progressionIndex], key.root, key.prefer)
   const rng = createRng(seed)
   const rhythms = chords.map(() => generateBarRhythm(level, rng))
-  return { chords, melody: generateMelody(rhythms, chords, rng) }
+  return { chords, melody: generateMelody(rhythms, chords, level, rng) }
 }
 
 describe('generateMelody', () => {
@@ -57,7 +57,7 @@ describe('generateMelody', () => {
       { dur: 'q', dots: 0, ticks: 12, rest: false, start: 36, tie: false },
     ]
     const rhythms = chords.map(() => tied.map((event) => ({ ...event })))
-    const melody = generateMelody(rhythms, chords, createRng(7))
+    const melody = generateMelody(rhythms, chords, 10, createRng(7))
     let tiesSeen = 0
     for (const bar of melody) {
       bar.forEach((event, i) => {

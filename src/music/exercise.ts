@@ -47,7 +47,7 @@ export function generateExercise(options: ExerciseOptions): Exercise {
   const chords = buildProgression(progression, key.root, key.prefer)
   const rhythms = generateBarRhythms(options.level, chords.length, rng)
   const bass = generateBass(chords, rng)
-  const melody = generateMelody(rhythms, chords, rng)
+  const melody = generateMelody(rhythms, chords, options.level, rng)
 
   let lastBass: number | null = null
   let lastMelody: number | null = null

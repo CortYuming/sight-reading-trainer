@@ -14,20 +14,28 @@ export const TICKS_PER_BAR = TICKS_PER_BEAT * BEATS_PER_BAR
 /**
  * Levels 1-6 are the basics: each brings a handful of new shapes, one rhythm
  * per bar, repeated across the beats. Levels 7-10 mix everything learned, with
- * the beats drawn one at a time, and the last of them adds ties.
+ * the beats drawn one at a time, and the last of them adds ties. From 11 the
+ * rhythm stops climbing — it stays at what 10 draws — and the melodic shapes
+ * take over as what gets harder.
  */
-export type Level = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+export type Level = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
 
-export const LEVELS: readonly Level[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+export const LEVELS: readonly Level[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
 /** Where the basics end and everything comes back mixed. */
 export const BASIC_LEVELS = 6
+
+/** Where the rhythm stops climbing and the pitches take over. */
+export const RHYTHM_LEVELS = 10
 
 /** Beats drawn one at a time instead of one shape repeated through the bar. */
 export const isMixed = (level: Level): boolean => level > BASIC_LEVELS
 
 /** Ties come last: they only make sense once the beats vary. */
 export const hasTies = (level: Level): boolean => level >= 10
+
+/** The pitches are drawn as melodic shapes rather than one note at a time. */
+export const hasShape = (level: Level): boolean => level > RHYTHM_LEVELS
 
 /** VexFlow duration code. */
 export type Duration = 'q' | '8' | '16'

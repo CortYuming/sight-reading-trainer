@@ -115,6 +115,26 @@ phone. There is no time signature — every exercise is in 4/4.
   | 9 | all of them |
   | 10 | all of them, and ties across the beat |
 
+- From level 11 the rhythm stops climbing — it stays at what 10 draws — and the
+  pitches take over. The melody is built from **melodic shapes** after Jerry
+  Bergonzi: one small cell of scale degrees per bar, repeated across the beats
+  and moved on a degree each time, so a bar reads as a sequence rather than as
+  one note after another. Levels 11-14 are the three note shapes, one direction
+  each, and 15 has the four of them together:
+
+  | Level | Shape |
+  |---|---|
+  | 11 | up-up |
+  | 12 | up-down |
+  | 13 | down-down |
+  | 14 | down-up |
+  | 15 | the four together |
+
+  They come out as triads in inversion rather than as runs up the scale, which
+  is what the transcription says they are. The level menu names them, since a
+  number alone would not say which is which. See
+  [docs/melodic-shapes.md](docs/melodic-shapes.md).
+
 All pitches are **written** pitches. Guitar notation sounds one octave lower
 than written.
 

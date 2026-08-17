@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Level } from './music/rhythm'
-import { LEVELS, isMixed } from './music/rhythm'
+import { LEVELS, hasShape, isMixed } from './music/rhythm'
 import type { SwingId } from './audio/schedule'
 import { generateExercise } from './music/exercise'
 import { PROGRESSIONS } from './music/progression'
 import { KEYS } from './music/pitch'
+import { shapeSummary } from './music/shape'
 import { SWING_SETTINGS, swingRatio } from './audio/schedule'
 import { Player } from './audio/player'
 import { Score } from './components/Score'
@@ -334,7 +335,7 @@ export default function App() {
             </select>
           </label>
 
-          <label className="field">
+          <label className="field level">
             <span className="field-label">Level</span>
             <select value={level} onChange={(e) => setLevel(Number(e.target.value) as Level)}>
               <optgroup label="Basics">
@@ -345,9 +346,16 @@ export default function App() {
                 ))}
               </optgroup>
               <optgroup label="Advanced">
-                {LEVELS.filter(isMixed).map((l) => (
+                {LEVELS.filter((l) => isMixed(l) && !hasShape(l)).map((l) => (
                   <option key={l} value={l}>
                     {l}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Shapes">
+                {LEVELS.filter(hasShape).map((l) => (
+                  <option key={l} value={l}>
+                    {l} — {shapeSummary(l)}
                   </option>
                 ))}
               </optgroup>
