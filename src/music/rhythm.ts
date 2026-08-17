@@ -316,10 +316,14 @@ export function generateBarRhythm(level: Level, rng: Rng): BarEvent[] {
  * mixed levels are random throughout — that is what makes them the hard read.
  */
 export function generateBarRhythms(level: Level, barCount: number, rng: Rng): BarEvent[][] {
-  if (isMixed(level)) {
-    return Array.from({ length: barCount }, () => generateBarRhythm(level, rng))
-  }
+  const bars = isMixed(level)
+    ? Array.from({ length: barCount }, () => generateBarRhythm(level, rng))
+    : climbingBars(level, barCount, rng)
+  if (hasTies(level)) applyBarTies(bars, rng)
+  return bars
+}
 
+function climbingBars(level: Level, barCount: number, rng: Rng): BarEvent[][] {
   const pool = patternsFor(level)
   const climbing = Math.ceil((barCount * 2) / 3)
   return Array.from({ length: barCount }, (_, bar) => {
@@ -327,6 +331,32 @@ export function generateBarRhythms(level: Level, barCount: number, rng: Rng): Ba
       bar < climbing ? pool[Math.floor((bar * pool.length) / climbing)] : rng.pick(pool)
     return buildBar(Array.from({ length: 4 }, () => pattern))
   })
+}
+
+/** How often a bar that ends off the beat is tied into the one after it. */
+const BAR_TIE_CHANCE = 0.35
+
+/**
+ * Tie the last note of a bar into the first of the next.
+ *
+ * This is the anticipation a jazz line lives on: the next bar arrives an
+ * eighth early, over the last of the bar before it. The rule is the one the
+ * ties inside a bar follow — only a note that starts off the beat qualifies,
+ * since tying one that starts on the beat spells a longer note rather than a
+ * syncopation. The last bar is left alone; there is nothing after it.
+ */
+function applyBarTies(bars: BarEvent[][], rng: Rng): void {
+  for (let i = 0; i < bars.length - 1; i++) {
+    const events = bars[i]
+    const last = events[events.length - 1]
+    const next = bars[i + 1][0]
+    if (last.rest || next.rest) continue
+    if (last.tuplet !== undefined || next.tuplet !== undefined) continue
+    if (last.ticks >= TICKS_PER_BEAT) continue
+    if (last.start % TICKS_PER_BEAT === 0) continue
+    if (!rng.chance(BAR_TIE_CHANCE)) continue
+    last.tie = true
+  }
 }
 
 function buildBar(beats: BeatPattern[], tieRng?: Rng): BarEvent[] {

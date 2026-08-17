@@ -113,6 +113,7 @@ describe('drawMeasure', () => {
         dots: 0,
         rest: false,
         tieToNext: false,
+        tieFromPrevious: false,
       }))
 
     for (const key of ['e/3', 'b/5']) {
@@ -175,6 +176,7 @@ describe('note names', () => {
       dots: 0,
       rest: key === REST_KEY,
       tieToNext: false,
+      tieFromPrevious: false,
     }))
 
   function names(container: HTMLElement): string[] {

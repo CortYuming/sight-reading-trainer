@@ -117,6 +117,14 @@ phone. There is no time signature — every exercise is in 4/4.
   | 9 | all of them |
   | 10 | all of them, and ties across the beat |
 
+  From 10 a tie can also cross a **barline**, which is the anticipation a jazz
+  line lives on: the coming chord is sounded an eighth before it is due. The
+  note held over is a chord tone of the bar being arrived at, not of the one
+  being left — holding the old chord over would land a dissonance on the
+  downbeat. About one bar in six carries one. Since every row is one bar, the
+  tie is drawn as two halves, one running off the end of a row and one arriving
+  at the start of the next.
+
 - From level 11 the rhythm steps back — plain divisions of a beat, and a good
   deal of silence, so that a bar runs to five or six notes rather than twelve
   and the eye can see where one figure ends — and the

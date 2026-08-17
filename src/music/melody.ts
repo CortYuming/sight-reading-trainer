@@ -65,7 +65,7 @@ function fromShapes(
     let round = 0
     let queue: number[] = []
 
-    return events.map((event): MelodyEvent => {
+    return events.map((event, index): MelodyEvent => {
       if (event.rest) {
         carried = null
         return { ...event, midi: null }
@@ -74,6 +74,13 @@ function fromShapes(
       if (carried !== null) {
         const midi = carried
         carried = event.tie ? midi : null
+        return { ...event, midi }
+      }
+
+      if (index === events.length - 1 && event.tie) {
+        const midi = anticipate(nextChord, previous)
+        previous = midi
+        carried = midi
         return { ...event, midi }
       }
 
@@ -119,7 +126,7 @@ function noteByNote(
     const tones = chordTonePitchClasses(chord)
     const scale = scalePitchClasses(chord, nextChord)
 
-    return events.map((event): MelodyEvent => {
+    return events.map((event, index): MelodyEvent => {
       if (event.rest) {
         carried = null
         return { ...event, midi: null }
@@ -128,6 +135,14 @@ function noteByNote(
       if (carried !== null) {
         const midi = carried
         carried = event.tie ? midi : null
+        return { ...event, midi }
+      }
+
+      if (index === events.length - 1 && event.tie) {
+        const midi = anticipate(nextChord, previous)
+        previousInterval = previous === null ? 0 : midi - previous
+        previous = midi
+        carried = midi
         return { ...event, midi }
       }
 
@@ -141,6 +156,26 @@ function noteByNote(
       return { ...event, midi }
     })
   })
+}
+
+/**
+ * The note to hold over a barline: a chord tone of the bar being arrived at,
+ * nearest to where the line already is.
+ *
+ * A jazz line anticipates — the coming chord is sounded an eighth before it is
+ * due — and that is the whole point of tying across the barline. Holding the
+ * current chord's note over instead would land a dissonance on the downbeat as
+ * often as not.
+ */
+function anticipate(chord: ChordSymbol, previous: number | null): number {
+  const target = previous ?? HOME
+  const candidates = chordTonePitchClasses(chord).flatMap((pc) =>
+    pitchesWithClass(pc, MELODY_RANGE),
+  )
+  return candidates.reduce(
+    (best, c) => (Math.abs(c - target) < Math.abs(best - target) ? c : best),
+    candidates[0],
+  )
 }
 
 function choosePitch(

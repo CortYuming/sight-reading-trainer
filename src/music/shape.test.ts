@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Level } from './rhythm'
 import { generateMelody } from './melody'
-import { generateBarRhythm } from './rhythm'
+import { generateBarRhythms } from './rhythm'
 import { buildProgression, PROGRESSIONS } from './progression'
 import { KEYS, MELODY_RANGE } from './pitch'
 import { createRng } from './random'
@@ -179,7 +179,7 @@ describe('a melody built from shapes', () => {
     const key = KEYS[0]
     const chords = buildProgression(PROGRESSIONS[progressionIndex], key.root, key.prefer)
     const rng = createRng(seed)
-    const rhythms = chords.map(() => generateBarRhythm(level, rng))
+    const rhythms = generateBarRhythms(level, chords.length, rng)
     return { chords, melody: generateMelody(rhythms, chords, level, rng) }
   }
 
@@ -208,16 +208,20 @@ describe('a melody built from shapes', () => {
     }
   })
 
+  // Including the ties that cross a barline, where the note held is the first
+  // of the bar after.
   it('holds the same pitch across a tie', () => {
     let tiesSeen = 0
     for (const seed of SEEDS) {
-      for (const bar of build(seed).melody) {
+      const melody = build(seed).melody
+      melody.forEach((bar, b) => {
         bar.forEach((event, i) => {
           if (!event.tie) return
           tiesSeen++
-          expect(bar[i + 1].midi).toBe(event.midi)
+          const next = i + 1 < bar.length ? bar[i + 1] : melody[b + 1]?.[0]
+          expect(next?.midi).toBe(event.midi)
         })
-      }
+      })
     }
     expect(tiesSeen).toBeGreaterThan(0)
   })

@@ -12,6 +12,8 @@ export interface NoteSpec {
   /** Set when this note belongs to a tuplet. */
   tuplet?: EventTuplet
   tieToNext: boolean
+  /** Held over from the bar before, so the tie arrives from off the stave. */
+  tieFromPrevious: boolean
 }
 
 /** Rests sit on the middle line. */
@@ -24,16 +26,24 @@ export function bassSpecs(bar: ExerciseBar): NoteSpec[] {
     dots: 0,
     rest: false,
     tieToNext: false,
+    tieFromPrevious: false,
   }))
 }
 
-export function melodySpecs(bar: ExerciseBar): NoteSpec[] {
-  return bar.melody.map((event) => ({
+/**
+ * The bar before is wanted only for its last note: if that was tied, this
+ * bar's first note is the same note held on, and the tie has to be drawn
+ * arriving from off the left of the stave.
+ */
+export function melodySpecs(bar: ExerciseBar, previous?: ExerciseBar): NoteSpec[] {
+  const heldOver = previous?.melody[previous.melody.length - 1]?.tie ?? false
+  return bar.melody.map((event, i) => ({
     key: event.spelled ? spelledVexKey(event.spelled) : REST_KEY,
     duration: event.dur,
     dots: event.dots,
     rest: event.rest,
     ...(event.tuplet ? { tuplet: event.tuplet } : {}),
     tieToNext: event.tie,
+    tieFromPrevious: i === 0 && heldOver,
   }))
 }

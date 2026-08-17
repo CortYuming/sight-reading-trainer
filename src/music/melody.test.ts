@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { BarEvent, Level } from './rhythm'
 import { generateMelody } from './melody'
-import { generateBarRhythm, TICKS_PER_BEAT } from './rhythm'
+import { generateBarRhythms, TICKS_PER_BEAT } from './rhythm'
 import { buildProgression, PROGRESSIONS } from './progression'
 import { chordTonePitchClasses } from './chord'
 import { KEYS, MELODY_RANGE, pitchClass } from './pitch'
@@ -13,7 +13,7 @@ function build(level: Level, seed: number, progressionIndex = 0, keyIndex = 0) {
   const key = KEYS[keyIndex]
   const chords = buildProgression(PROGRESSIONS[progressionIndex], key.root, key.prefer)
   const rng = createRng(seed)
-  const rhythms = chords.map(() => generateBarRhythm(level, rng))
+  const rhythms = generateBarRhythms(level, chords.length, rng)
   return { chords, melody: generateMelody(rhythms, chords, level, rng) }
 }
 
@@ -118,5 +118,25 @@ describe('generateMelody', () => {
 
   it('is reproducible from a seed', () => {
     expect(build(4, 99).melody).toEqual(build(4, 99).melody)
+  })
+
+  // A tie across a barline is an anticipation: the coming chord is sounded an
+  // eighth before it is due. Holding the current chord's note over instead
+  // would land a dissonance on the downbeat as often as not.
+  it('anticipates the next chord where a tie crosses a barline', () => {
+    let crossings = 0
+    for (const level of [10, 11] as Level[]) {
+      for (const seed of SEEDS) {
+        const { chords, melody } = build(level, seed)
+        melody.forEach((bar, i) => {
+          const last = bar[bar.length - 1]
+          if (!last.tie || last.midi === null) return
+          crossings++
+          expect(chordTonePitchClasses(chords[i + 1])).toContain(pitchClass(last.midi))
+          expect(melody[i + 1][0].midi).toBe(last.midi)
+        })
+      }
+    }
+    expect(crossings).toBeGreaterThan(10)
   })
 })

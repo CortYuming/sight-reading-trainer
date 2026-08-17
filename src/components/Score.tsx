@@ -45,10 +45,10 @@ export function Score({
 
   const bars = useMemo(
     () =>
-      exercise.bars.map((bar) => ({
+      exercise.bars.map((bar, i) => ({
         chord: bar.chord.label,
         bass: bassSpecs(bar),
-        melody: melodySpecs(bar),
+        melody: melodySpecs(bar, exercise.bars[i - 1]),
       })),
     [exercise],
   )

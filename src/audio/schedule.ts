@@ -125,7 +125,6 @@ export function scheduleExercise(exercise: Exercise, swing: number): Schedule {
 
   exercise.bars.forEach((bar, barIndex) => {
     const barStart = barIndex * TICKS_PER_BAR
-
     bar.bass.forEach((pitch, beat) => {
       notes.push({
         time: (barStart + beat * TICKS_PER_BEAT) / TICKS_PER_BEAT,
@@ -137,37 +136,49 @@ export function scheduleExercise(exercise: Exercise, swing: number): Schedule {
         index: beat,
       })
     })
-
-    const events = bar.melody
-    let i = 0
-    while (i < events.length) {
-      const event = events[i]
-      if (event.rest || event.spelled === null) {
-        i++
-        continue
-      }
-
-      let last = i
-      while (events[last].tie && last + 1 < events.length) last++
-
-      const start = beatsAt(barStart + event.start, swing, swung)
-      const end = beatsAt(barStart + events[last].start + events[last].ticks, swing, swung)
-      notes.push({
-        time: start,
-        // Right up to the next note, with no gap left in front of it. A gap
-        // made every note a separate blip and a run a row of them. The cost is
-        // that two of the same pitch in a row are now told apart by the
-        // envelope retriggering rather than by silence between them.
-        duration: Math.max(end - start, 0.05),
-        midi: event.spelled.midi + SOUNDING_OFFSET,
-        velocity: melodyVelocity(barStart + event.start, event.ticks, swung),
-        part: 'melody',
-        barIndex,
-        index: i,
-      })
-      i = last + 1
-    }
   })
+
+  // The melody runs as one list rather than bar by bar: a tie can cross a
+  // barline, and the note it makes has to be scheduled as the one long note it
+  // is rather than cut at the bar it started in.
+  const melody = exercise.bars.flatMap((bar, barIndex) =>
+    bar.melody.map((event, index) => ({
+      event,
+      barIndex,
+      index,
+      start: barIndex * TICKS_PER_BAR + event.start,
+    })),
+  )
+
+  let i = 0
+  while (i < melody.length) {
+    const from = melody[i]
+    if (from.event.rest || from.event.spelled === null) {
+      i++
+      continue
+    }
+
+    let last = i
+    while (melody[last].event.tie && last + 1 < melody.length) last++
+    const to = melody[last]
+
+    const start = beatsAt(from.start, swing, swung)
+    const end = beatsAt(to.start + to.event.ticks, swing, swung)
+    notes.push({
+      time: start,
+      // Right up to the next note, with no gap left in front of it. A gap
+      // made every note a separate blip and a run a row of them. The cost is
+      // that two of the same pitch in a row are now told apart by the
+      // envelope retriggering rather than by silence between them.
+      duration: Math.max(end - start, 0.05),
+      midi: from.event.spelled.midi + SOUNDING_OFFSET,
+      velocity: melodyVelocity(from.start, from.event.ticks, swung),
+      part: 'melody',
+      barIndex: from.barIndex,
+      index: from.index,
+    })
+    i = last + 1
+  }
 
   notes.sort((a, b) => a.time - b.time)
   return { notes, beats: exercise.bars.length * BEATS_PER_BAR }

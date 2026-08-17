@@ -138,8 +138,9 @@ function drawNoteNames(
   context.setFont(NAME_FONT, size, NAME_WEIGHT)
 
   specs.forEach((spec, i) => {
-    // A rest has no pitch, and a note tied into is the one before it held on.
-    if (spec.rest || specs[i - 1]?.tieToNext) return
+    // A rest has no pitch, and a note tied into is the one before it held on —
+    // whether that note is in this bar or the one before.
+    if (spec.rest || spec.tieFromPrevious || specs[i - 1]?.tieToNext) return
     const note = notes[i]
     const label = noteName(spec.key)
     // The SVG clips at its own edge, so the last name of a bar has to be
@@ -237,17 +238,32 @@ function buildTuplets(specs: NoteSpec[], notes: StaveNote[]): Tuplet[] {
   )
 }
 
+/**
+ * Every tie on this stave, including the halves of the ones that cross a
+ * barline.
+ *
+ * A tie out of the last note has no note on its right, and a tie into the
+ * first has none on its left. Given one end, VexFlow draws the half of the
+ * curve it can, running off the end of the stave — which is exactly how a tie
+ * across a barline is written, and here across a row as well, since every row
+ * is one bar.
+ */
 function buildTies(specs: NoteSpec[], notes: StaveNote[]): StaveTie[] {
   const ties: StaveTie[] = []
   specs.forEach((spec, i) => {
-    if (!spec.tieToNext || i + 1 >= notes.length) return
+    if (spec.tieFromPrevious) {
+      ties.push(new StaveTie({ lastNote: notes[i], lastIndexes: [0] }))
+    }
+    if (!spec.tieToNext) return
     ties.push(
-      new StaveTie({
-        firstNote: notes[i],
-        lastNote: notes[i + 1],
-        firstIndexes: [0],
-        lastIndexes: [0],
-      }),
+      i + 1 < notes.length
+        ? new StaveTie({
+            firstNote: notes[i],
+            lastNote: notes[i + 1],
+            firstIndexes: [0],
+            lastIndexes: [0],
+          })
+        : new StaveTie({ firstNote: notes[i], firstIndexes: [0] }),
     )
   })
   return ties
