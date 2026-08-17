@@ -38,9 +38,9 @@ all four in order.
 
 ## What was transcribed
 
-Every staff of pages 4-7, which is all four three note directions and is what
-the app is built on. One staff each of the other categories, enough to see what
-they are and not enough to build them.
+Every staff of pages 4-13 — all four three note directions and all six four
+note ones, which is what the app is built on. One staff each of the other
+categories, enough to see what they are and not enough to build them.
 
 ### Eight note — page 20
 
@@ -118,19 +118,27 @@ page 4 and a down-down is a scale run on page 6; both are the same lesson, read
 in thirds one time and in seconds the next. Shapes built on page 4 alone came
 out wrong in three of the four directions.
 
-### Four note — page 8, Giant Steps
+### Four note — pages 8-13, Giant Steps
 
-No key signature; the accidentals carry the modulations.
+The book numbers these rather than naming them — Ex 1, 3, 5, 6, 7, 9 — and the
+numbering is the directions. Every staff of all six pages:
 
-| Chord | Notes | Degrees |
-|---|---|---|
-| Bmaj7 | F♯4 B4 C♯5 D♯5 | 5 1 2 3 |
-| D7 | A4 B4 D♮5 E5 | 5 6 1 2 |
-| Gmaj7 | B4 D5 E5 F♯5 | 3 5 6 7 |
-| B♭7 | B♭4 C5 D5 E♭5 | 1 2 3 4 |
+| Ex | Page | Direction | Shapes read |
+|---|---|---|---|
+| 1 | 8 | up-up-up | 1-2-3-4, 1-3-5-7, 1-2-3-5, 1-2-4-6 |
+| 3 | 9 | up-up-down | 1-2-3-1, 1-3-5-3, 1-3-4-3 |
+| 5 | 10 | up-down-up | 1-2-1-4, 1-3-1-5 |
+| 6 | 11 | down-down-down | 5-4-2-1, 6-5-3-1, 4-3-2-1 |
+| 7 | 12 | down-up-up | 3-1-3-5 |
+| 9 | 13 | down-up-down | 3-1-4-3, 2-1-3-2 |
 
-The first is the classic 1-2-3-5 cell, rotated to start on the 5. The rest are
-four steps up the chord scale from wherever the previous cell left off.
+Six of the eight ways four notes can be strung together. Down-down-up and
+up-down-down are the two left out, and Ex 2, 4 and 8 are missing with them.
+
+Giant Steps modulates every two bars and the page carries no key signature, so
+these staves are half accidentals — and none of them were read. A degree is a
+position on the staff: F♯4 B4 C♯5 D♯5 over Bmaj7 is 5-1-2-3 whichever way the
+sharps fall, because B major spells its own fifth without being asked.
 
 ### Five note, all up — page 15, Stablemates
 
@@ -229,15 +237,14 @@ level brings only its own shapes, and mixing is the job of the level above.
 
 | Level | Shapes |
 |---|---|
-| 11 | three note, up-up |
-| 12 | three note, up-down |
-| 13 | three note, down-down |
-| 14 | three note, down-up |
+| 11-14 | three note: up-up, up-down, down-down, down-up |
 | 15 | three note, the four together |
+| 16-21 | four note: up-up-up, up-up-down, up-down-up, down-down-down, down-up-up, down-up-down |
+| 22 | four note, the six together |
 
-Four, five and eight note shapes carry on from 16 on the same plan. They are
-not built: their degrees wait on transcribing more of the book than the one
-staff per category read so far.
+Five and eight note shapes carry on from 23 on the same plan. They are not
+built: their degrees wait on transcribing more of the book than the one staff
+per category read so far.
 
 A shape level's number does not say what it asks for, so the level menu names
 its figures — `11 — 3 note: up-up` — where a rhythm level shows a digit and

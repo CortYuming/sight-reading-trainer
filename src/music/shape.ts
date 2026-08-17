@@ -61,7 +61,44 @@ const DOWN_UP: readonly Shape[] = [
 ]
 
 /**
- * One direction per level, then the four of them together — which is how the
+ * The four note shapes, transcribed from every staff of pages 8-13.
+ *
+ * The book numbers these rather than naming them — Giant Steps Ex 1, 3, 5, 6,
+ * 7, 9 — but the numbering is the directions: each exercise holds one of the
+ * eight ways four notes can be strung together, and six of the eight are here.
+ * Down-down-up and up-down-down are the two the book leaves out, and Ex 2, 4
+ * and 8 are missing along with them.
+ */
+const UP_UP_UP: readonly Shape[] = [
+  { id: 'up-up-up', degrees: [1, 2, 3, 4], sequence: 1 },
+  { id: 'up-up-up', degrees: [1, 3, 5, 7], sequence: 1 },
+  { id: 'up-up-up', degrees: [1, 2, 3, 5], sequence: 1 },
+  { id: 'up-up-up', degrees: [1, 2, 4, 6], sequence: 1 },
+]
+const UP_UP_DOWN: readonly Shape[] = [
+  { id: 'up-up-down', degrees: [1, 2, 3, 1], sequence: 1 },
+  { id: 'up-up-down', degrees: [1, 3, 5, 3], sequence: 1 },
+  { id: 'up-up-down', degrees: [1, 3, 4, 3], sequence: 1 },
+]
+const UP_DOWN_UP: readonly Shape[] = [
+  { id: 'up-down-up', degrees: [1, 2, 1, 4], sequence: 1 },
+  { id: 'up-down-up', degrees: [1, 3, 1, 5], sequence: 1 },
+]
+const DOWN_DOWN_DOWN: readonly Shape[] = [
+  { id: 'down-down-down', degrees: [5, 4, 2, 1], sequence: 1 },
+  { id: 'down-down-down', degrees: [6, 5, 3, 1], sequence: 1 },
+  { id: 'down-down-down', degrees: [4, 3, 2, 1], sequence: 1 },
+]
+const DOWN_UP_UP: readonly Shape[] = [
+  { id: 'down-up-up', degrees: [3, 1, 3, 5], sequence: 1 },
+]
+const DOWN_UP_DOWN: readonly Shape[] = [
+  { id: 'down-up-down', degrees: [3, 1, 4, 3], sequence: 1 },
+  { id: 'down-up-down', degrees: [2, 1, 3, 2], sequence: 1 },
+]
+
+/**
+ * One direction per level, then all of that length together — which is how the
  * book teaches them, an exercise per direction, and how this app already works:
  * a level brings only its own shapes, and mixing is what the level above is
  * for.
@@ -72,6 +109,20 @@ const SHAPES_BY_LEVEL: Partial<Record<Level, readonly Shape[]>> = {
   13: DOWN_DOWN,
   14: DOWN_UP,
   15: [...UP_UP, ...UP_DOWN, ...DOWN_DOWN, ...DOWN_UP],
+  16: UP_UP_UP,
+  17: UP_UP_DOWN,
+  18: UP_DOWN_UP,
+  19: DOWN_DOWN_DOWN,
+  20: DOWN_UP_UP,
+  21: DOWN_UP_DOWN,
+  22: [
+    ...UP_UP_UP,
+    ...UP_UP_DOWN,
+    ...UP_DOWN_UP,
+    ...DOWN_DOWN_DOWN,
+    ...DOWN_UP_UP,
+    ...DOWN_UP_DOWN,
+  ],
 }
 
 /** The shapes a level draws from, or null if it draws pitches one at a time. */

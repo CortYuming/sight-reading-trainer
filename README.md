@@ -119,20 +119,20 @@ phone. There is no time signature — every exercise is in 4/4.
   pitches take over. The melody is built from **melodic shapes** after Jerry
   Bergonzi: one small cell of scale degrees per bar, repeated across the beats
   and moved on a degree each time, so a bar reads as a sequence rather than as
-  one note after another. Levels 11-14 are the three note shapes, one direction
-  each, and 15 has the four of them together:
+  one note after another. A level brings one direction, and the level after the
+  set has them all:
 
-  | Level | Shape |
+  | Level | Shapes |
   |---|---|
-  | 11 | up-up |
-  | 12 | up-down |
-  | 13 | down-down |
-  | 14 | down-up |
-  | 15 | the four together |
+  | 11-14 | three note: up-up, up-down, down-down, down-up |
+  | 15 | three note, the four together |
+  | 16-21 | four note: up-up-up, up-up-down, up-down-up, down-down-down, down-up-up, down-up-down |
+  | 22 | four note, the six together |
 
-  They come out as triads in inversion rather than as runs up the scale, which
-  is what the transcription says they are. The level menu names them, since a
-  number alone would not say which is which. See
+  A direction is a family rather than a single figure, since the book fixes
+  which way each step goes and not how far — an up-up is a triad in one bar and
+  a scale run in the next. The level menu names them, because a number alone
+  would not say which is which. See
   [docs/melodic-shapes.md](docs/melodic-shapes.md).
 
 All pitches are **written** pitches. Guitar notation sounds one octave lower

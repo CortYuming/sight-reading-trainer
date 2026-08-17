@@ -18,9 +18,16 @@ export const TICKS_PER_BAR = TICKS_PER_BEAT * BEATS_PER_BAR
  * rhythm stops climbing — it stays at what 10 draws — and the melodic shapes
  * take over as what gets harder.
  */
-export type Level = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
+// prettier-ignore
+export type Level =
+  | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+  | 11 | 12 | 13 | 14 | 15
+  | 16 | 17 | 18 | 19 | 20 | 21 | 22
 
-export const LEVELS: readonly Level[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+export const LEVELS: readonly Level[] = Array.from(
+  { length: 22 },
+  (_, i) => (i + 1) as Level,
+)
 
 /** Where the basics end and everything comes back mixed. */
 export const BASIC_LEVELS = 6

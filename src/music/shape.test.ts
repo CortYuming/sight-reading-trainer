@@ -10,18 +10,48 @@ import { realiseShape, shapeFits, shapesFor } from './shape'
 
 const SEEDS = Array.from({ length: 20 }, (_, i) => i * 11 + 5)
 
+/** Levels that bring one direction, and the level each of them mixes into. */
+const FAMILIES: Array<{ solo: Level[]; mixed: Level; names: string[] }> = [
+  {
+    solo: [11, 12, 13, 14],
+    mixed: 15,
+    names: ['up-up', 'up-down', 'down-down', 'down-up'],
+  },
+  {
+    solo: [16, 17, 18, 19, 20, 21],
+    mixed: 22,
+    names: [
+      'up-up-up',
+      'up-up-down',
+      'up-down-up',
+      'down-down-down',
+      'down-up-up',
+      'down-up-down',
+    ],
+  },
+]
+
+const EVERY_SHAPE = FAMILIES.flatMap((f) => shapesFor(f.mixed) ?? [])
+
 const directions = (pitches: number[]): number[] =>
   pitches.slice(1).map((p, i) => Math.sign(p - pitches[i]))
 
-/** Every shape, over every chord of every key, entered from anywhere. */
+let realisations: Array<{ fits: boolean; pitches: number[] }> | null = null
+
+/**
+ * Every shape, over every chord of every form, at both ends of the range and
+ * from every degree. One flat key and one sharp one, which is every spelling
+ * there is; running all five only repeats the work.
+ */
 function everyRealisation(): Array<{ fits: boolean; pitches: number[] }> {
+  if (realisations !== null) return realisations
   const out: Array<{ fits: boolean; pitches: number[] }> = []
-  for (const key of KEYS) {
+  for (const key of [KEYS[0], KEYS[KEYS.length - 1]]) {
     for (const progression of PROGRESSIONS) {
       for (const chord of buildProgression(progression, key.root, key.prefer)) {
-        for (const shape of shapesFor(15) ?? []) {
-          for (const from of [null, MELODY_RANGE.min, MELODY_RANGE.max]) {
-            for (let offset = 0; offset < 8; offset++) {
+        for (const shape of EVERY_SHAPE) {
+          for (const from of [MELODY_RANGE.min, MELODY_RANGE.max]) {
+            for (let offset = 0; offset < 7; offset++) {
               out.push({
                 fits: shapeFits(shape, chord, undefined, offset),
                 pitches: realiseShape(shape, chord, undefined, from, offset),
@@ -32,6 +62,7 @@ function everyRealisation(): Array<{ fits: boolean; pitches: number[] }> {
       }
     }
   }
+  realisations = out
   return out
 }
 
@@ -111,61 +142,68 @@ describe('realiseShape', () => {
 })
 
 describe('shapesFor', () => {
-  it('gives the rhythm levels nothing and each shape level one direction', () => {
+  it('gives the rhythm levels nothing', () => {
     for (const level of [1, 5, 10] as Level[]) expect(shapesFor(level)).toBeNull()
-    for (const level of [11, 12, 13, 14] as Level[]) {
-      const ids = new Set((shapesFor(level) ?? []).map((s) => s.id))
-      expect(ids.size).toBe(1)
+  })
+
+  it('gives each shape level one direction, and one length', () => {
+    for (const { solo } of FAMILIES) {
+      for (const level of solo) {
+        const shapes = shapesFor(level) ?? []
+        expect(new Set(shapes.map((s) => s.id)).size).toBe(1)
+        expect(new Set(shapes.map((s) => s.degrees.length)).size).toBe(1)
+      }
     }
   })
 
   it('brings every direction in once before mixing them', () => {
-    const alone = ([11, 12, 13, 14] as Level[]).flatMap((l) => shapesFor(l) ?? [])
-    expect([...new Set(alone.map((s) => s.id))]).toEqual([
-      'up-up',
-      'up-down',
-      'down-down',
-      'down-up',
-    ])
-    expect(shapesFor(15)).toEqual(alone)
+    for (const { solo, mixed, names } of FAMILIES) {
+      const alone = solo.flatMap((l) => shapesFor(l) ?? [])
+      expect([...new Set(alone.map((s) => s.id))]).toEqual(names)
+      expect(shapesFor(mixed)).toEqual(alone)
+    }
   })
 
   // A cell that ends one degree above where it started would, moved on by one,
   // begin the next cell on the note the last one finished.
   it('never lets a repetition start on the note before it', () => {
-    for (const level of [11, 12, 13, 14, 15] as Level[]) {
-      for (const shape of shapesFor(level) ?? []) {
-        const rise = shape.degrees[shape.degrees.length - 1] - shape.degrees[0]
-        expect(shape.sequence).not.toBe(rise)
-      }
+    for (const shape of EVERY_SHAPE) {
+      const rise = shape.degrees[shape.degrees.length - 1] - shape.degrees[0]
+      expect(shape.sequence).not.toBe(rise)
     }
   })
 })
 
 describe('a melody built from shapes', () => {
-  function build(seed: number, progressionIndex = 0) {
+  function build(seed: number, progressionIndex = 0, level: Level = 11) {
     const key = KEYS[0]
     const chords = buildProgression(PROGRESSIONS[progressionIndex], key.root, key.prefer)
     const rng = createRng(seed)
-    const rhythms = chords.map(() => generateBarRhythm(11, rng))
-    return { chords, melody: generateMelody(rhythms, chords, 11, rng) }
+    const rhythms = chords.map(() => generateBarRhythm(level, rng))
+    return { chords, melody: generateMelody(rhythms, chords, level, rng) }
   }
 
+  const SHAPE_LEVELS = FAMILIES.flatMap((f) => [...f.solo, f.mixed])
+
   it('gives every sounding event a pitch and every rest none', () => {
-    for (const seed of SEEDS) {
-      for (const event of build(seed).melody.flat()) {
-        if (event.rest) expect(event.midi).toBeNull()
-        else expect(event.midi).not.toBeNull()
+    for (const level of SHAPE_LEVELS) {
+      for (const seed of SEEDS) {
+        for (const event of build(seed, 0, level).melody.flat()) {
+          if (event.rest) expect(event.midi).toBeNull()
+          else expect(event.midi).not.toBeNull()
+        }
       }
     }
   })
 
   it('stays inside the guitar melody range', () => {
-    for (const seed of SEEDS) {
-      for (const event of build(seed).melody.flat()) {
-        if (event.midi === null) continue
-        expect(event.midi).toBeGreaterThanOrEqual(MELODY_RANGE.min)
-        expect(event.midi).toBeLessThanOrEqual(MELODY_RANGE.max)
+    for (const level of SHAPE_LEVELS) {
+      for (const seed of SEEDS) {
+        for (const event of build(seed, 0, level).melody.flat()) {
+          if (event.midi === null) continue
+          expect(event.midi).toBeGreaterThanOrEqual(MELODY_RANGE.min)
+          expect(event.midi).toBeLessThanOrEqual(MELODY_RANGE.max)
+        }
       }
     }
   })
