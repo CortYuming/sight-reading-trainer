@@ -8,24 +8,20 @@ Every exercise is generated, so the page never runs out of new material.
 
 ## Status
 
-Generation, notation and playback all work. Not published yet — the GitHub
-repository does not exist, so nothing has been pushed.
+Generation, notation and playback all work, and the page is live at
+[cortyuming.github.io/sight-reading-trainer](https://cortyuming.github.io/sight-reading-trainer/).
 
 1. ~~**Phase 1** — exercise generator (chords, walking bass, rhythm, melody)~~
 2. ~~**Phase 2** — notation on two staves (VexFlow)~~
 3. ~~**Phase 3** — playback with swing feel (Tone.js)~~
-4. **Phase 4** — settings, responsive layout, GitHub Pages
+4. **Phase 4** — settings, responsive layout, GitHub Pages. Published; the
+   layout is still to be checked on a real phone.
 5. **Phase 5** — melodic shapes. Three and four note done, levels 11-22; five
    and eight note still to read out of the book. See
    [docs/melodic-shapes.md](docs/melodic-shapes.md).
 
 ## Remaining work
 
-- **Publish it.** `gh repo create` and a GitHub Pages deploy; the workflow file
-  has to be copied over from chord-vamp, with `node-version: 22` to match the
-  volta pin. This is the one that matters most: the shape levels have never
-  been played with a guitar in hand, because there is nowhere to open them but
-  a dev server.
 - **Five note shapes**, pages 14-19 of the book, as levels 23 and up. One staff
   has been read (all-up over Stablemates, 2-3-5-7-9 over Em7) and the rest have
   not. Reading one staff has been wrong twice now, so read every one.
@@ -36,7 +32,9 @@ repository does not exist, so nothing has been pushed.
   not have room to finish one, let alone sequence it. Work out how the cell
   meets the rhythm before writing it.
 - Tighten the layout on a narrow phone. The two columns hold together down to
-  about 320px, but nothing has been checked on a real handset.
+  about 320px, but nothing has been checked on a real handset. There is
+  somewhere to open it on one now, which also means the shape levels can
+  finally be played with a guitar in hand.
 - Listen for whether the tail of a note is clipped at a barline when the bar
   repeats. Reported as "not always smooth" and fixed by seeking instead of
   rebuilding; worth a second listen before calling it done.
