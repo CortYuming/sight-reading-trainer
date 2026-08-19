@@ -1,7 +1,7 @@
 import * as Tone from 'tone'
 import type { Exercise } from '../music/exercise'
 import { BEATS_PER_BAR } from '../music/rhythm'
-import type { Part, ScheduledNote } from './schedule'
+import type { Part, ScheduledCue, ScheduledNote } from './schedule'
 import { scheduleExercise } from './schedule'
 import type { DrumHit } from './drums'
 import { scheduleDrums } from './drums'
@@ -19,7 +19,11 @@ export interface PlayerOptions {
   startBar: number
   /** Bar to loop on its own, or null to loop the whole exercise. */
   loopBar: number | null
-  onNote: (part: Part, barIndex: number, index: number) => void
+  /**
+   * Fires as the music reaches each event of a part: a note as it sounds, a
+   * rest as it begins. What is being read moves on either way.
+   */
+  onEvent: (part: Part, barIndex: number, index: number) => void
   /** Fires as each bar begins, for following the music on screen. */
   onBar: (barIndex: number) => void
   /**
@@ -64,6 +68,11 @@ interface ClickEvent {
 interface DrumEvent {
   time: string
   hit: DrumHit
+}
+
+interface CueEvent {
+  time: string
+  cue: ScheduledCue
 }
 
 interface BarEvent {
@@ -129,7 +138,7 @@ export class Player {
 
     this.kit = this.buildInstruments()
 
-    const { notes, beats } = scheduleExercise(exercise, options.swing)
+    const { notes, cues, beats } = scheduleExercise(exercise, options.swing)
 
     const loopStartBeat = options.loopBar === null ? 0 : options.loopBar * BEATS_PER_BAR
     const loopEndBeat = options.loopBar === null ? beats : loopStartBeat + BEATS_PER_BAR
@@ -152,6 +161,20 @@ export class Player {
     const music = new Tone.Part<NoteEvent>((time, event) => this.playNote(time, event.note), musicEvents)
     music.start(0)
     this.parts.push(music)
+
+    // The rests, which move the highlight and nothing else. They are their own
+    // part rather than silent notes in the music, so that nothing about the
+    // sound has to make room for something that does not sound.
+    const cueEvents: CueEvent[] = cues.map((cue) => ({
+      time: atBeat(cue.time + offset),
+      cue,
+    }))
+    const highlights = new Tone.Part<CueEvent>(
+      (time, event) => this.showCue(time, event.cue),
+      cueEvents,
+    )
+    highlights.start(0)
+    this.parts.push(highlights)
 
     const drumEvents: DrumEvent[] = scheduleDrums(exercise.bars.length, options.swing).map(
       (hit) => ({ time: atBeat(hit.time + offset), hit }),
@@ -330,7 +353,21 @@ export class Player {
     instrument.triggerAttackRelease(frequency, atBeat(note.duration), time, note.velocity)
 
     Tone.getDraw().schedule(() => {
-      options.onNote(note.part, note.barIndex, note.index)
+      options.onEvent(note.part, note.barIndex, note.index)
+    }, time)
+  }
+
+  /**
+   * Move the highlight onto a rest. A muted part is left alone, the same way a
+   * muted note goes unhighlighted: what is switched off is not being read.
+   */
+  private showCue(time: number, cue: ScheduledCue): void {
+    const options = this.options
+    if (options === null || this.kit === null) return
+    if (this.voiceFor(cue.part, options, this.kit).muted) return
+
+    Tone.getDraw().schedule(() => {
+      options.onEvent(cue.part, cue.barIndex, cue.index)
     }, time)
   }
 

@@ -292,7 +292,7 @@ select {
   stroke: var(--text);
 }
 
-/* The note that is sounding right now. */
+/* Where the music is: the note sounding, or the rest being counted. */
 .measure svg g.note-active {
   fill: var(--accent);
   stroke: var(--accent);

@@ -101,10 +101,10 @@ export default function App() {
         muteDrums: !playDrums,
         startBar,
         loopBar,
-        onNote: (part, barIndex, index) => {
-          const note = { barIndex, index }
-          if (part === 'bass') setActiveBass(note)
-          else setActiveMelody(note)
+        onEvent: (part, barIndex, index) => {
+          const at = { barIndex, index }
+          if (part === 'bass') setActiveBass(at)
+          else setActiveMelody(at)
         },
         onBar: setCurrentBar,
         onWrapSoon: () => setWrapCue((count) => count + 1),

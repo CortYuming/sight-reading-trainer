@@ -8,7 +8,7 @@ interface MeasureProps {
   showHeader: boolean
   showNoteNames: boolean
   width: number
-  /** Index of the note to highlight while it sounds, or null. */
+  /** Index of the note or rest to highlight while the music is on it, or null. */
   activeIndex: number | null
   /** Opening and closing repeat barlines, drawn on the first and last bar. */
   repeatBegin: boolean

@@ -19,8 +19,27 @@ export interface ScheduledNote {
   index: number
 }
 
+/**
+ * A moment that moves the highlight without sounding: a rest.
+ *
+ * The highlight used to follow the notes alone, which left it sitting on the
+ * note before a rest for as long as the rest lasted — the same picture a tie
+ * makes, where the note really is still sounding. Cueing the rests separates
+ * the two: the highlight standing still now means a note is being held, and a
+ * rest lit up means silence being counted.
+ */
+export interface ScheduledCue {
+  /** Position from the start of the exercise, in quarter-note beats. */
+  time: number
+  part: Part
+  barIndex: number
+  /** Index within the bar, counted the way ScheduledNote counts it. */
+  index: number
+}
+
 export interface Schedule {
   notes: ScheduledNote[]
+  cues: ScheduledCue[]
   /** Length of the exercise in beats. */
   beats: number
 }
@@ -180,6 +199,18 @@ export function scheduleExercise(exercise: Exercise, swing: number): Schedule {
     i = last + 1
   }
 
+  // Only the melody rests: the bass walks four quarter notes through every bar.
+  // An off-beat rest is swung along with everything else on the half-beat, so
+  // it lights where the note it replaced would have sounded.
+  const cues: ScheduledCue[] = melody
+    .filter(({ event }) => event.rest)
+    .map(({ barIndex, index, start }) => ({
+      time: beatsAt(start, swing, swung),
+      part: 'melody' as const,
+      barIndex,
+      index,
+    }))
+
   notes.sort((a, b) => a.time - b.time)
-  return { notes, beats: exercise.bars.length * BEATS_PER_BAR }
+  return { notes, cues, beats: exercise.bars.length * BEATS_PER_BAR }
 }

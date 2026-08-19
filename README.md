@@ -75,6 +75,9 @@ phone. There is no time signature — every exercise is in 4/4.
   sextuplets are played even: they take their shape from the contour of the
   line, not from the beat. Each note's envelope is cut down to fit its own
   length, or a run smears into one sound.
+- The event being read is coloured — a note while it sounds, a rest while it is
+  counted — so the mark moves through the bar whether or not there is anything
+  to hear. Where it stands still, a note is being held over a tie.
 - **Note names** writes each note's letter beside its head, in the spelling the
   staff uses. Off by default — reading the pitch is the exercise, so the letters
   are there to fall back on. They shrink where a bar is too packed to take them.

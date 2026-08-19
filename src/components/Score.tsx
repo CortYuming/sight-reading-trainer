@@ -10,7 +10,7 @@ const COLUMN_GAP = 16
 const MIN_BASS_WIDTH = 96
 const MIN_MELODY_WIDTH = 150
 
-/** Which note is sounding right now, if any. */
+/** Where a part is in its bar: the note sounding, or the rest being counted. */
 export interface ActiveNote {
   barIndex: number
   index: number

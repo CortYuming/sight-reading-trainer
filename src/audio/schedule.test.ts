@@ -197,3 +197,50 @@ describe('scheduleExercise', () => {
     }
   })
 })
+
+
+describe('rest cues', () => {
+  // Level 2 answers the level 1 shapes with a rest in them, so rests are
+  // everywhere in it.
+  const exercise = generateExercise({
+    keyName: 'Bb',
+    progressionId: 'blues',
+    level: 2,
+    seed: 5,
+  })
+  const { notes, cues } = scheduleExercise(exercise, 0.75)
+
+  it('cues every rest the melody holds, in order, and nothing else', () => {
+    const rests = exercise.bars.flatMap((bar, barIndex) =>
+      bar.melody.flatMap((event, index) => (event.rest ? [`${barIndex}:${index}`] : [])),
+    )
+    expect(rests.length).toBeGreaterThan(0)
+    expect(cues.map((cue) => `${cue.barIndex}:${cue.index}`)).toEqual(rests)
+    expect(new Set(cues.map((cue) => cue.part))).toEqual(new Set(['melody']))
+  })
+
+  it('never lands on an event that sounds', () => {
+    const sounding = new Set(
+      notes.filter((n) => n.part === 'melody').map((n) => `${n.barIndex}:${n.index}`),
+    )
+    expect(cues.filter((cue) => sounding.has(`${cue.barIndex}:${cue.index}`))).toEqual([])
+  })
+
+  // A rest on the half-beat has to move where the note it replaced would have
+  // moved, or the highlight arrives at it before the ear expects the silence.
+  it('swings an off-beat rest along with the line', () => {
+    const half = TICKS_PER_BEAT / 2
+    const offbeat = exercise.bars.flatMap((bar, barIndex) =>
+      bar.melody.flatMap((event, index) =>
+        event.rest && !event.tuplet && event.ticks === half && event.start % TICKS_PER_BEAT === half
+          ? [{ barIndex, index }]
+          : [],
+      ),
+    )
+    expect(offbeat.length).toBeGreaterThan(0)
+    for (const { barIndex, index } of offbeat) {
+      const cue = cues.find((c) => c.barIndex === barIndex && c.index === index)
+      expect(cue?.time ?? -1).toBeCloseTo(Math.floor(cue?.time ?? 0) + 0.75)
+    }
+  })
+})
