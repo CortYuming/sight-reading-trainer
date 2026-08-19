@@ -116,12 +116,10 @@ describe('realiseShape', () => {
   })
 
   it('stays inside the guitar melody range', () => {
-    for (const { pitches } of everyRealisation()) {
-      for (const pitch of pitches) {
-        expect(pitch).toBeGreaterThanOrEqual(MELODY_RANGE.min)
-        expect(pitch).toBeLessThanOrEqual(MELODY_RANGE.max)
-      }
-    }
+    const outside = everyRealisation()
+      .flatMap(({ pitches }) => pitches)
+      .filter((pitch) => pitch < MELODY_RANGE.min || pitch > MELODY_RANGE.max)
+    expect(outside).toEqual([])
   })
 
   // Where a shape fits, it keeps its contour: the widest step any three note
@@ -129,15 +127,12 @@ describe('realiseShape', () => {
   // further. Where it does not fit the notes fold, which is why the melody
   // skips those offsets rather than using them.
   it('never reaches past a fifth inside a shape that fits', () => {
-    let fitted = 0
-    for (const { fits, pitches } of everyRealisation()) {
-      if (!fits) continue
-      fitted++
-      for (let i = 1; i < pitches.length; i++) {
-        expect(Math.abs(pitches[i] - pitches[i - 1])).toBeLessThanOrEqual(8)
-      }
-    }
-    expect(fitted).toBeGreaterThan(1000)
+    const fitted = everyRealisation().filter(({ fits }) => fits)
+    const wide = fitted.flatMap(({ pitches }) =>
+      pitches.slice(1).map((pitch, i) => Math.abs(pitch - pitches[i])).filter((step) => step > 8),
+    )
+    expect(wide).toEqual([])
+    expect(fitted.length).toBeGreaterThan(1000)
   })
 })
 
