@@ -102,20 +102,35 @@ export interface BeatPattern {
   notes: NoteTemplate[]
 }
 
+/**
+ * How many beats a shape fills — read off its notes rather than declared
+ * beside them, so the two can never disagree. One for most, two for a shape
+ * that straddles a pair of beats.
+ */
+export const patternBeats = (pattern: Pick<BeatPattern, 'notes' | 'tuplet'>): number =>
+  pattern.notes.reduce((ticks, note) => ticks + templateTicks(note, pattern.tuplet), 0) /
+  TICKS_PER_BEAT
+
 const TRIPLET: TupletRatio = [3, 2]
 const SEXTUPLET: TupletRatio = [6, 4]
 
 /**
- * Every pattern fills exactly one beat. Listed hardest-last: the eleven
- * rest-free shapes are ordered by difficulty and dealt out to the odd levels,
- * four, four and three, and each even level answers the ones below it with the
- * same shapes carrying a rest.
+ * Every pattern fills a whole number of beats — one, or two where the shape
+ * straddles a pair of them. Listed hardest-last: the thirteen rest-free shapes
+ * are ordered by difficulty and dealt out to the odd levels, six, four and
+ * three, and each even level answers the ones below it with the same shapes
+ * carrying a rest.
  *
- * A plain quarter is not among them. Repeated across the bar it would spell
- * the same four beats the bass already walks, which is nothing to read.
+ * A plain quarter is not among them on its own. Repeated across the bar it
+ * would spell the same four beats the bass already walks, which is nothing to
+ * read. Inside a two-beat shape it has eighths beside it to be read against,
+ * which is a different thing to look at.
  */
 export const BEAT_PATTERNS: BeatPattern[] = [
-  // Level 1 — the plain divisions of a beat, and the dotted pair.
+  // Level 1 — eighths against a quarter, the plain divisions of a beat, and
+  // the dotted pair.
+  { id: '8-8-q', level: 1, notes: [{ dur: '8' }, { dur: '8' }, { dur: 'q' }] },
+  { id: 'q-8-8', level: 1, notes: [{ dur: 'q' }, { dur: '8' }, { dur: '8' }] },
   { id: '8-8', level: 1, notes: [{ dur: '8' }, { dur: '8' }] },
   {
     id: '16x4',
@@ -126,6 +141,16 @@ export const BEAT_PATTERNS: BeatPattern[] = [
   { id: '16-8d', level: 1, notes: [{ dur: '16' }, { dur: '8', dots: 1 }] },
 
   // Level 2 — the level 1 shapes with a rest in them.
+  {
+    id: '8-8-rq',
+    level: 2,
+    notes: [{ dur: '8' }, { dur: '8' }, { dur: 'q', rest: true }],
+  },
+  {
+    id: 'rq-8-8',
+    level: 2,
+    notes: [{ dur: 'q', rest: true }, { dur: '8' }, { dur: '8' }],
+  },
   { id: '8-r8', level: 2, notes: [{ dur: '8' }, { dur: '8', rest: true }] },
   { id: 'r8-8', level: 2, notes: [{ dur: '8', rest: true }, { dur: '8' }] },
   {
@@ -243,7 +268,9 @@ const SILENT_BEATS = 6
  */
 const SHAPE_PATTERNS: BeatPattern[] = [
   ...Array.from({ length: SILENT_BEATS }, () => REST_BEAT),
-  ...BEAT_PATTERNS.filter((p) => p.level <= 2),
+  // One beat at a time: a two-beat shape would cross the boundary the melodic
+  // cell is placed against.
+  ...BEAT_PATTERNS.filter((p) => p.level <= 2 && patternBeats(p) === 1),
 ]
 
 const hasRest = (pattern: BeatPattern): boolean => pattern.notes.some((n) => n.rest)
@@ -275,36 +302,44 @@ export function patternsFor(level: Level): BeatPattern[] {
   return BEAT_PATTERNS
 }
 
+/** One shape, laid down as many times as it takes to fill the bar. */
+const repeatToBar = (pattern: BeatPattern): BeatPattern[] =>
+  Array.from({ length: BEATS_PER_BAR / patternBeats(pattern) }, () => pattern)
+
 const TIE_CHANCE = 0.3
 
 /**
  * Build one bar of 4/4 rhythm.
  *
- * Through the basics one pattern is drawn and repeated across all four beats:
- * the reader meets a single rhythm per bar and can put their attention on the
- * pitches. Every pattern is equally likely, so the pool size is the number of
- * bars that can come out.
+ * Through the basics one shape is drawn and repeated until the bar is full —
+ * four times for a one-beat shape, twice for a two-beat one: the reader meets
+ * a single rhythm per bar and can put their attention on the pitches. Every
+ * shape is equally likely, so the pool size is the number of bars that can
+ * come out.
  *
- * From level 7 the beats are drawn one at a time, beat 1 always sounding so
+ * From level 7 the shapes are drawn one at a time, beat 1 always sounding so
  * the bar has an audible downbeat, and ties across beat boundaries add the
- * off-beat push that makes a line swing.
+ * off-beat push that makes a line swing. A two-beat shape is only offered
+ * where two beats are left for it to sit in.
  */
 export function generateBarRhythm(level: Level, rng: Rng): BarEvent[] {
   const pool = patternsFor(level)
-  const beats: BeatPattern[] = []
+  const shapes: BeatPattern[] = []
   if (isMixed(level)) {
-    for (let beat = 0; beat < 4; beat++) {
-      let pattern = rng.pick(pool)
-      for (let retry = 0; retry < 4 && unwanted(pattern, beat, beats); retry++) {
-        pattern = rng.pick(pool)
+    let filled = 0
+    while (filled < BEATS_PER_BAR) {
+      const fitting = pool.filter((p) => patternBeats(p) <= BEATS_PER_BAR - filled)
+      let pattern = rng.pick(fitting)
+      for (let retry = 0; retry < 4 && unwanted(pattern, filled, shapes); retry++) {
+        pattern = rng.pick(fitting)
       }
-      beats.push(pattern)
+      shapes.push(pattern)
+      filled += patternBeats(pattern)
     }
   } else {
-    const pattern = rng.pick(pool)
-    for (let beat = 0; beat < 4; beat++) beats.push(pattern)
+    shapes.push(...repeatToBar(rng.pick(pool)))
   }
-  return buildBar(beats, hasTies(level) ? rng : undefined)
+  return buildBar(shapes, hasTies(level) ? rng : undefined)
 }
 
 /**
@@ -329,7 +364,7 @@ function climbingBars(level: Level, barCount: number, rng: Rng): BarEvent[][] {
   return Array.from({ length: barCount }, (_, bar) => {
     const pattern =
       bar < climbing ? pool[Math.floor((bar * pool.length) / climbing)] : rng.pick(pool)
-    return buildBar(Array.from({ length: 4 }, () => pattern))
+    return buildBar(repeatToBar(pattern))
   })
 }
 
@@ -359,10 +394,11 @@ function applyBarTies(bars: BarEvent[][], rng: Rng): void {
   }
 }
 
-function buildBar(beats: BeatPattern[], tieRng?: Rng): BarEvent[] {
+function buildBar(shapes: BeatPattern[], tieRng?: Rng): BarEvent[] {
   const events: BarEvent[] = []
   let start = 0
-  beats.forEach((pattern, beat) => {
+  let beat = 0
+  for (const pattern of shapes) {
     for (const note of pattern.notes) {
       const ticks = templateTicks(note, pattern.tuplet)
       events.push({
@@ -384,7 +420,8 @@ function buildBar(beats: BeatPattern[], tieRng?: Rng): BarEvent[] {
       })
       start += ticks
     }
-  })
+    beat += patternBeats(pattern)
+  }
 
   if (tieRng) applyTies(events, tieRng)
   return events

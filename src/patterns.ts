@@ -1,7 +1,7 @@
 /**
- * Catalogue of every one-beat pattern under consideration. Each row is that
- * pattern repeated four times — exactly what a bar would show under the
- * repeat scheme. Pitch is fixed so only the rhythm is on trial.
+ * Catalogue of every beat pattern under consideration. Each row is that
+ * pattern repeated until the bar is full — exactly what a bar would show
+ * under the repeat scheme. Pitch is fixed so only the rhythm is on trial.
  *
  * Served at /patterns.html by the dev server. Not part of the app.
  */

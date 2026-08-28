@@ -1,8 +1,9 @@
 /**
- * Shared material for the two scratch pages: the catalogue of one-beat
- * patterns, and the proposed level ladder. Neither is part of the app.
+ * Shared material for the two scratch pages: the catalogue of beat patterns,
+ * and the proposed level ladder. Neither is part of the app.
  */
-import { BEAT_PATTERNS } from '../music/rhythm'
+import { BEATS_PER_BAR, BEAT_PATTERNS, patternBeats } from '../music/rhythm'
+import type { NoteTemplate } from '../music/rhythm'
 import {
   Beam,
   Dot,
@@ -17,10 +18,7 @@ import {
   Voice,
 } from 'vexflow/bravura'
 
-export interface Template {
-  dur: string
-  dots?: number
-  rest?: boolean
+export interface Template extends NoteTemplate {
   /** Tied to the note that follows. */
   tie?: boolean
 }
@@ -28,7 +26,7 @@ export interface Template {
 export interface Pattern {
   id: string
   note: string
-  /** One beat. Repeated four times to make the bar. */
+  /** Repeated until the bar is full: four times for one beat, twice for two. */
   notes: Template[]
   /** [numNotes, notesOccupied] when the beat is a tuplet. */
   tuplet?: [number, number]
@@ -40,6 +38,16 @@ const T6: [number, number] = [6, 4]
 /** Rest-free, easiest first. */
 export const PLAIN: Pattern[] = [
   { id: 'q', note: '4分音符', notes: [{ dur: 'q' }] },
+  {
+    id: '8-8-q',
+    note: '8分×2 → 4分（2拍）',
+    notes: [{ dur: '8' }, { dur: '8' }, { dur: 'q' }],
+  },
+  {
+    id: 'q-8-8',
+    note: '4分 → 8分×2（2拍）',
+    notes: [{ dur: 'q' }, { dur: '8' }, { dur: '8' }],
+  },
   { id: '8-8', note: '8分×2', notes: [{ dur: '8' }, { dur: '8' }] },
   {
     id: 'triplet',
@@ -107,6 +115,16 @@ export const PLAIN: Pattern[] = [
 /** With rests, easiest first. */
 export const WITH_RESTS: Pattern[] = [
   { id: 'rq', note: '4分休符', notes: [{ dur: 'q', rest: true }] },
+  {
+    id: '8-8-rq',
+    note: '8分×2 → 4分休符（2拍）',
+    notes: [{ dur: '8' }, { dur: '8' }, { dur: 'q', rest: true }],
+  },
+  {
+    id: 'rq-8-8',
+    note: '4分休符 → 8分×2（2拍）',
+    notes: [{ dur: 'q', rest: true }, { dur: '8' }, { dur: '8' }],
+  },
   {
     id: '8-r8',
     note: '8分 → 8分休符',
@@ -221,12 +239,21 @@ export const LEVEL_PLAN: LevelStep[] = [
   {
     level: 1,
     kind: '休符なし',
-    added: byId(PLAIN, ['8-8', '16x4', '8d-16', '16-8d']),
+    added: byId(PLAIN, ['8-8-q', 'q-8-8', '8-8', '16x4', '8d-16', '16-8d']),
   },
   {
     level: 2,
     kind: '休符あり',
-    added: byId(WITH_RESTS, ['8-r8', 'r8-8', 'r16-16x3', '16-16-r16-16', '8d-r16', 'r16-8d']),
+    added: byId(WITH_RESTS, [
+      '8-8-rq',
+      'rq-8-8',
+      '8-r8',
+      'r8-8',
+      'r16-16x3',
+      '16-16-r16-16',
+      '8d-r16',
+      'r16-8d',
+    ]),
   },
   {
     level: 3,
@@ -263,7 +290,7 @@ const KEY = 'b/4'
 const WIDTH = 320
 const HEIGHT = 120
 
-/** Draw the pattern repeated across all four beats — one level 1 bar. */
+/** Draw the pattern repeated until the bar is full — one level 1 bar. */
 export function drawPattern(container: HTMLElement, pattern: Pattern) {
   const renderer = new Renderer(container as HTMLDivElement, Renderer.Backends.SVG)
   renderer.resize(WIDTH, HEIGHT)
@@ -276,7 +303,8 @@ export function drawPattern(container: HTMLElement, pattern: Pattern) {
   const tuplets: Tuplet[] = []
   const ties: StaveTie[] = []
 
-  for (let beat = 0; beat < 4; beat++) {
+  const repeats = BEATS_PER_BAR / patternBeats(pattern)
+  for (let repeat = 0; repeat < repeats; repeat++) {
     const beatNotes = pattern.notes.map((template) => {
       const note = new StaveNote({
         keys: [KEY],

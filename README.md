@@ -98,18 +98,18 @@ phone. There is no time signature — every exercise is in 4/4.
 - The **bass** walks in quarter notes: the root on beat 1, chord tones on beats
   2-3, and a chromatic or dominant approach into the next bar on beat 4.
   Range: written E3-E4, i.e. strings 6-4.
-- The **melody** draws one beat-long rhythm per bar and repeats it across all
-  four beats, then borrows pitches from the chord and its scale — chord tones
-  on the beat, stepwise motion in between. Range: written G4-B5, i.e. strings
-  3-1. A bar therefore carries a single rhythm, and the reading is in the
-  pitches.
+- The **melody** draws one rhythm per bar — a beat long, or two where the
+  shape straddles them — and repeats it until the bar is full, then borrows
+  pitches from the chord and its scale — chord tones on the beat, stepwise
+  motion in between. Range: written G4-B5, i.e. strings 3-1. A bar therefore
+  carries a single rhythm, and the reading is in the pitches.
 - Levels climb in pairs. An odd level opens a set of rest-free shapes and the
   even level above answers them with the same shapes carrying a rest, so a
   rhythm is always met plain before it is met broken up:
 
   | Level | Added |
   |---|---|
-  | 1 | two eighths, four sixteenths, dotted eighth + sixteenth, its reverse |
+  | 1 | two eighths into a quarter and the reverse, two eighths, four sixteenths, dotted eighth + sixteenth, its reverse |
   | 2 | the level 1 shapes with a rest |
   | 3 | sixteenths beside an eighth, three ways, then the eighth triplet |
   | 4 | the level 3 shapes with a rest |
@@ -118,10 +118,13 @@ phone. There is no time signature — every exercise is in 4/4.
 
   A level brings only its own shapes. Carrying the earlier ones along would
   just repeat the levels below, and going back a level is the way to practise
-  those. Pool sizes: 4, 6, 4, 6, 3, 3.
+  those. Pool sizes: 6, 8, 4, 6, 3, 3.
 
-  A plain quarter is not in the pool: repeated across a bar it would spell the
-  four beats the bass already walks, which is nothing to read.
+  Most shapes fill one beat; the two that open level 1 fill two, and a bar of
+  those is the shape twice rather than four times. A plain quarter is in the
+  pool only inside one of them. On its own, repeated across a bar, it would
+  spell the four beats the bass already walks, which is nothing to read; with
+  eighths beside it there is something to read it against.
 - Through the basics the bars climb: the first two thirds of a page walk up the
   pool from its easiest shape to its hardest, and the last third is drawn at
   random from everything met.
@@ -135,6 +138,9 @@ phone. There is no time signature — every exercise is in 4/4.
   | 9 | all of them |
   | 10 | all of them, and ties across the beat |
 
+  A two-beat shape is only offered where two beats are left in the bar, so it
+  is never cut in half at the barline.
+
   From 10 a tie can also cross a **barline**, which is the anticipation a jazz
   line lives on: the coming chord is sounded an eighth before it is due. The
   note held over is a chord tone of the bar being arrived at, not of the one
@@ -143,9 +149,9 @@ phone. There is no time signature — every exercise is in 4/4.
   tie is drawn as two halves, one running off the end of a row and one arriving
   at the start of the next.
 
-- From level 11 the rhythm steps back — plain divisions of a beat, and a good
-  deal of silence, so that a bar runs to five or six notes rather than twelve
-  and the eye can see where one figure ends — and the
+- From level 11 the rhythm steps back — one-beat shapes only, plain divisions
+  of a beat and a good deal of silence, so that a bar runs to five or six
+  notes rather than twelve and the eye can see where one figure ends — and the
   pitches take over. The melody is built from **melodic shapes** after Jerry
   Bergonzi: one small cell of scale degrees per bar, repeated across the beats
   and moved on a degree each time, so a bar reads as a sequence rather than as
