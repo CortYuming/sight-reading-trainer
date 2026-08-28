@@ -318,6 +318,9 @@ export default function App() {
           <span className="group-divider strong" aria-hidden="true" />
 
           <div className="bar-nav">
+            <span className="bar-mark" role="img" aria-label="Bar">
+              🎼
+            </span>
             <button
               type="button"
               className="btn icon"

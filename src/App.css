@@ -168,6 +168,18 @@ select {
   gap: 0.25rem;
 }
 
+/*
+ * What the three arrows are for. Without it they sit beside the tempo box with
+ * nothing to say they step through the music rather than change it.
+ */
+.bar-mark {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1rem;
+  line-height: 1;
+  user-select: none;
+}
+
 .tempo input[type='range'] {
   width: 7rem;
   accent-color: var(--text);
