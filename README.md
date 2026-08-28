@@ -65,6 +65,10 @@ phone. There is no time signature — every exercise is in 4/4.
 - Swing has four depths. Measurements of jazz drummers put the ratio near 3.5:1
   at slow tempos and close to 1:1 above 250bpm; the default sits in the middle,
   at the 2:1 triplet feel the notation implies.
+- **Tempo** is dragged on the slider or typed into the box beside it. What is
+  typed stands as it is until the box is left or Enter is pressed, and is held
+  to 40-240 only then: correcting every keystroke would put 45 out of reach,
+  since the 4 on the way to it is below the minimum.
 - **Drums** play the jazz ride pattern — a stroke on every beat and a swung
   eighth after two and four — with the hi-hat foot closing on two and four. The
   swung strokes take the same ratio the melody does, so the kit is what the

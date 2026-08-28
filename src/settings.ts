@@ -52,9 +52,13 @@ function boolean(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback
 }
 
+/** A tempo the app will accept: a whole number inside the slider's range. */
+export const clampTempo = (value: number): number =>
+  Math.min(TEMPO_MAX, Math.max(TEMPO_MIN, Math.round(value)))
+
 function tempo(value: unknown, fallback: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
-  return Math.min(TEMPO_MAX, Math.max(TEMPO_MIN, Math.round(value)))
+  return clampTempo(value)
 }
 
 /**

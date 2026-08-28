@@ -9,7 +9,7 @@ import { shapeGroups, shapeSummary } from './music/shape'
 import { SWING_SETTINGS, swingRatio } from './audio/schedule'
 import { Player } from './audio/player'
 import { Score } from './components/Score'
-import { TEMPO_MAX, TEMPO_MIN, loadSettings, saveSettings } from './settings'
+import { TEMPO_MAX, TEMPO_MIN, clampTempo, loadSettings, saveSettings } from './settings'
 import type { Settings } from './settings'
 import { entryId, entryLabel, loadHistory, remember, saveHistory } from './history'
 import type { HistoryEntry } from './history'
@@ -31,6 +31,10 @@ export default function App() {
   const [seed, setSeed] = useState(randomSeed)
 
   const [bpm, setBpm] = useState(saved.bpm)
+  // What the tempo box is showing while it is being typed in, kept apart from
+  // `bpm` so a half-typed number is not corrected mid-keystroke: the 4 on the
+  // way to 45 would otherwise snap to the minimum of 40.
+  const [bpmText, setBpmText] = useState(() => String(saved.bpm))
   const [swing, setSwing] = useState<SwingId>(saved.swing)
   const [countIn, setCountIn] = useState(saved.countIn)
   const [playBass, setPlayBass] = useState(saved.playBass)
@@ -253,6 +257,21 @@ export default function App() {
     showNoteNames,
   ])
 
+  const applyBpm = (value: number) => {
+    setBpm(value)
+    setBpmText(String(value))
+  }
+
+  /*
+   * A number is taken as it is typed, and only held to the range once the box
+   * is left or Enter is pressed. Anything that is not a number by then — an
+   * empty box, a stray minus — falls back on the tempo still playing.
+   */
+  const commitBpm = () => {
+    const typed = Number(bpmText)
+    applyBpm(bpmText.trim() === '' || !Number.isFinite(typed) ? bpm : clampTempo(typed))
+  }
+
   return (
     <div className="page">
       <header className="toolbar">
@@ -269,10 +288,34 @@ export default function App() {
               max={TEMPO_MAX}
               value={bpm}
               aria-label="Tempo"
-              onChange={(e) => setBpm(Number(e.target.value))}
+              onChange={(e) => applyBpm(Number(e.target.value))}
             />
-            <span className="readout">{bpm}</span>
+            <input
+              type="number"
+              className="tempo-input"
+              min={TEMPO_MIN}
+              max={TEMPO_MAX}
+              step={1}
+              inputMode="numeric"
+              value={bpmText}
+              aria-label="Tempo in beats per minute"
+              onChange={(e) => {
+                setBpmText(e.target.value)
+                const typed = Number(e.target.value)
+                // Follow along while it is still a tempo, so the music moves
+                // with the typing rather than waiting for Enter.
+                if (e.target.value !== '' && typed === clampTempo(typed)) setBpm(typed)
+              }}
+              onBlur={commitBpm}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur()
+              }}
+            />
           </div>
+
+          {/* The bar controls sit next to the tempo box and read as part of it
+              without a rule between them. */}
+          <span className="group-divider strong" aria-hidden="true" />
 
           <div className="bar-nav">
             <button
