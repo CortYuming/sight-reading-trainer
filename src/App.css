@@ -295,6 +295,8 @@ select {
 
 .column {
   flex: 0 0 auto;
+  /* The bar number hangs over the staff below, so the column is its origin. */
+  position: relative;
 }
 
 /* The dividing line between the two pages, as in the original exercise. */
@@ -303,21 +305,54 @@ select {
   padding-left: 1rem;
 }
 
-.row-label {
-  font-size: 0.75rem;
-  color: var(--muted);
-  height: 1.1rem;
-  line-height: 1.1rem;
+/*
+ * The chord name and its roman numeral, stacked. Both columns carry a box of
+ * the same height, empty on the bass side, so the two staves still line up.
+ * It sits above the staff in the flow but paints over it, which is what the
+ * negative margin on .measure below arranges.
+ */
+.bar-label {
+  height: 2.35rem;
+  position: relative;
+  z-index: 1;
 }
 
-.row-label.chord {
-  font-size: 0.85rem;
+.chord-name {
+  font-size: 0.95rem;
+  line-height: 1.2rem;
   font-weight: 600;
   color: var(--text);
 }
 
+.chord-numeral {
+  font-size: 0.9rem;
+  line-height: 1.15rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Small, at the head of the bar, the way a printed score numbers its bars. */
+.bar-number {
+  position: absolute;
+  left: 3px;
+  top: 3rem;
+  z-index: 2;
+  font-size: 0.65rem;
+  line-height: 1;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * VexFlow leaves four staff lines of air above the top line, and the labels
+ * are pulled down into it rather than stacked on top of it: the numeral would
+ * otherwise float a whole staff away from the notes it names, and the row
+ * would grow by its height. What the labels can meet down there is the stem
+ * of a high note or a tuplet bracket, never a notehead.
+ */
 .measure {
   overflow: visible;
+  margin-top: -1.25rem;
 }
 
 /*

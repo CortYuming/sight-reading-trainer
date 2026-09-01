@@ -53,6 +53,14 @@ Clef and key signature are drawn on the first row only: every row is one bar,
 and repeating the header on each of them would eat most of the width on a
 phone. There is no time signature — every exercise is in 4/4.
 
+Above the melody staff stands the chord name and, under it, its roman numeral
+in the key: Cm7 in Bb is `ii`. The numeral carries no quality — the chord name
+directly above already says it — and a minor third writes it lowercase. The
+bar number is small at the head of the bar, over the bass staff, where the
+range never reaches. Both labels are pulled down into the air VexFlow leaves
+above the top staff line, so they sit near the notes they name and the rows
+keep the height they had.
+
 ## Playing along
 
 - **Space** starts and stops. A count-in of one bar precedes the first note.

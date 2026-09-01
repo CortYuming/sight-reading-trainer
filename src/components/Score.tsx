@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { Exercise } from '../music/exercise'
 import { bassSpecs, melodySpecs } from '../notation/spec'
+import { romanNumeral } from '../music/numeral'
 import { useElementWidth } from '../hooks/useElementWidth'
 import { Measure } from './Measure'
 
@@ -47,6 +48,7 @@ export function Score({
     () =>
       exercise.bars.map((bar, i) => ({
         chord: bar.chord.label,
+        numeral: romanNumeral(bar.chord, exercise.key.root),
         bass: bassSpecs(bar),
         melody: melodySpecs(bar, exercise.bars[i - 1]),
       })),
@@ -90,7 +92,8 @@ export function Score({
           onClick={() => onSelectBar(i)}
         >
           <div className="column">
-            <div className="row-label">{i + 1}</div>
+            <div className="bar-label" />
+            <div className="bar-number">{i + 1}</div>
             {width > 0 && (
               <Measure
                 notes={bar.bass}
@@ -105,7 +108,10 @@ export function Score({
             )}
           </div>
           <div className="column melody">
-            <div className="row-label chord">{bar.chord}</div>
+            <div className="bar-label">
+              <div className="chord-name">{bar.chord}</div>
+              <div className="chord-numeral">{bar.numeral}</div>
+            </div>
             {width > 0 && (
               <Measure
                 notes={bar.melody}
