@@ -8,6 +8,9 @@ import { REST_KEY, bassSpecs, melodySpecs } from './spec'
 import type { NoteSpec } from './spec'
 import { MEASURE_HEIGHT, drawMeasure } from './draw'
 
+/** How far a tuplet's digit reaches above its baseline, at the size it is drawn. */
+const TUPLET_DIGIT = 12
+
 
 function render(
   notes: ReturnType<typeof melodySpecs>,
@@ -155,6 +158,50 @@ describe('drawMeasure', () => {
         })
       }
     }
+  })
+
+  /**
+   * The bracket used to be drawn above, where a high note with its stem had
+   * already spent the air: it landed at a negative y and the SVG clipped it
+   * away, so the beat read as three plain notes.
+   */
+  it('draws every tuplet bracket inside the SVG', { timeout: 60_000 }, () => {
+    let seen = 0
+    for (const level of LEVELS) {
+      for (const progression of PROGRESSIONS) {
+        const exercise = generateExercise({
+          keyName: 'Bb',
+          progressionId: progression.id,
+          level,
+          seed: 1,
+        })
+        exercise.bars.forEach((bar, i) => {
+          const container = document.createElement('div')
+          drawMeasure(container, {
+            notes: melodySpecs(bar, exercise.bars[i - 1]),
+            keySignature: 'Bb',
+            width: 300,
+            showHeader: i === 0,
+            showNoteNames: true,
+          })
+          for (const tuplet of container.querySelectorAll('g.vf-tuplet')) {
+            seen++
+            for (const rect of tuplet.querySelectorAll('rect[height]')) {
+              const y = Number(rect.getAttribute('y'))
+              expect(y).toBeGreaterThanOrEqual(0)
+              expect(y + Number(rect.getAttribute('height'))).toBeLessThanOrEqual(MEASURE_HEIGHT)
+            }
+            for (const text of tuplet.querySelectorAll('text')) {
+              // The digit is drawn up from its baseline; TUPLET_DIGIT covers it.
+              expect(Number(text.getAttribute('y')) - TUPLET_DIGIT).toBeGreaterThanOrEqual(0)
+              expect(Number(text.getAttribute('y'))).toBeLessThanOrEqual(MEASURE_HEIGHT)
+            }
+          }
+        })
+      }
+    }
+    // The levels without triplets would pass this test by drawing nothing.
+    expect(seen).toBeGreaterThan(100)
   })
 
   it('replaces the previous drawing instead of stacking SVGs', () => {

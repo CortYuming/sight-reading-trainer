@@ -87,6 +87,18 @@ export function drawMeasure(container: HTMLElement, options: MeasureOptions): Me
     beamRests: false,
   })
 
+  // Tuplet brackets go under the staff, not over it. Above is where VexFlow
+  // puts them, and on this staff that means off the top of the SVG: the air up
+  // there is four staff lines deep, a high note with its stem spends most of
+  // it, and the chord name and its numeral have taken the rest. The bracket was
+  // being clipped away, so the reader never learned the beat was a triplet.
+  // Under the staff nothing else is drawn.
+  //
+  // This has to come after the beams: generateBeams sets the bracket above or
+  // below from the stem of the group's first note, and a group that opens on a
+  // rest gets the resting default of up, whatever the notes after it do.
+  for (const tuplet of tuplets) tuplet.setTupletLocation(Tuplet.LOCATION_BOTTOM)
+
   new Formatter().joinVoices([voice]).formatToStave([voice], stave)
   voice.draw(context, stave)
 
