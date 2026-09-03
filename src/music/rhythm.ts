@@ -12,11 +12,13 @@ export const BEATS_PER_BAR = 4
 export const TICKS_PER_BAR = TICKS_PER_BEAT * BEATS_PER_BAR
 
 /**
- * Levels 1-6 are the basics: each brings a handful of new shapes, one rhythm
- * per bar, repeated across the beats. Levels 7-10 mix everything learned, with
- * the beats drawn one at a time, and the last of them adds ties. From 11 the
- * rhythm steps back to plain divisions and a good deal of silence, and the
- * melodic shapes take over as what gets harder.
+ * Levels 1-6 are the basics: each brings a handful of new shapes, laid down as
+ * a bar that repeats itself — one shape through the whole bar at levels 1 and
+ * 2, and from level 3 a two-beat cell of the new shape beside an earlier one,
+ * since those pools are too thin to fill a page on their own. Levels 7-10 mix
+ * everything learned, with the beats drawn one at a time, and the last of them
+ * adds ties. From 11 the rhythm steps back to plain divisions and a good deal
+ * of silence, and the melodic shapes take over as what gets harder.
  */
 // prettier-ignore
 export type Level =
@@ -302,20 +304,74 @@ export function patternsFor(level: Level): BeatPattern[] {
   return BEAT_PATTERNS
 }
 
+/**
+ * Where a level borrows the shape it pairs its own with: the lowest basic
+ * level of its own parity.
+ *
+ * A rest-free level borrows from level 1 and a rest-carrying one from level 2,
+ * so an odd level stays free of rests and an even level stays about them. That
+ * leaves levels 1 and 2 with nothing to borrow — being the lowest of their own
+ * parity, they answer to no one — and they fill a bar on their own, which
+ * their pools of six and eight are deep enough to do. The mixed levels draw
+ * their beats one at a time and never borrow.
+ */
+const partnerLevel = (level: Level): Level | undefined => {
+  if (isMixed(level)) return undefined
+  const lowest: Level = level % 2 === 1 ? 1 : 2
+  return level === lowest ? undefined : lowest
+}
+
+/**
+ * The shapes a level pairs its own with — one beat each, since they take every
+ * other beat of the bar. Empty for a level that fills a bar on its own.
+ */
+export function partnersFor(level: Level): BeatPattern[] {
+  const from = partnerLevel(level)
+  if (from === undefined) return []
+  return BEAT_PATTERNS.filter((p) => p.level === from && patternBeats(p) === 1)
+}
+
 /** One shape, laid down as many times as it takes to fill the bar. */
 const repeatToBar = (pattern: BeatPattern): BeatPattern[] =>
   Array.from({ length: BEATS_PER_BAR / patternBeats(pattern) }, () => pattern)
+
+/** How often the borrowed shape opens the bar rather than answering. */
+const PARTNER_FIRST_CHANCE = 0.5
+
+/**
+ * One bar of a basic level, built to repeat itself.
+ *
+ * Levels 1 and 2 lay their shape down until the bar is full: six and eight
+ * shapes deep is a page that does not say the same thing twice. From level 3
+ * the pool is thin — four shapes, three at levels 5 and 6 — and one shape four
+ * times over means a page with four bars in it, which is a page the reader has
+ * off by heart on the second pass. So the new shape takes every other beat and
+ * one borrowed from the level it answers takes the rest: the bar is a two-beat
+ * cell played twice, the new shape still sounds in half of every bar, and the
+ * bars level 3 can draw go from four to thirty-two.
+ *
+ * A two-beat shape fills the bar itself either way. It already changes within
+ * the bar, which is the whole of what borrowing buys, and it goes down twice
+ * rather than four times, so there is no every-other-beat to give away.
+ */
+function basicShapes(level: Level, pattern: BeatPattern, rng: Rng): BeatPattern[] {
+  const partners = partnersFor(level)
+  if (partners.length === 0 || patternBeats(pattern) !== 1) return repeatToBar(pattern)
+  const partner = rng.pick(partners)
+  const cell = rng.chance(PARTNER_FIRST_CHANCE) ? [partner, pattern] : [pattern, partner]
+  return [...cell, ...cell]
+}
 
 const TIE_CHANCE = 0.3
 
 /**
  * Build one bar of 4/4 rhythm.
  *
- * Through the basics one shape is drawn and repeated until the bar is full —
- * four times for a one-beat shape, twice for a two-beat one: the reader meets
- * a single rhythm per bar and can put their attention on the pitches. Every
- * shape is equally likely, so the pool size is the number of bars that can
- * come out.
+ * Through the basics one shape is drawn and the bar is built to repeat itself,
+ * so the reader meets a figure rather than four unrelated beats and can put
+ * their attention on the pitches: the shape four times over at levels 1 and 2,
+ * and from level 3 a two-beat cell — the new shape beside one borrowed from
+ * the level below — played twice. Every shape is equally likely.
  *
  * From level 7 the shapes are drawn one at a time, beat 1 always sounding so
  * the bar has an audible downbeat, and ties across beat boundaries add the
@@ -337,7 +393,7 @@ export function generateBarRhythm(level: Level, rng: Rng): BarEvent[] {
       filled += patternBeats(pattern)
     }
   } else {
-    shapes.push(...repeatToBar(rng.pick(pool)))
+    shapes.push(...basicShapes(level, rng.pick(pool), rng))
   }
   return buildBar(shapes, hasTies(level) ? rng : undefined)
 }
@@ -364,7 +420,7 @@ function climbingBars(level: Level, barCount: number, rng: Rng): BarEvent[][] {
   return Array.from({ length: barCount }, (_, bar) => {
     const pattern =
       bar < climbing ? pool[Math.floor((bar * pool.length) / climbing)] : rng.pick(pool)
-    return buildBar(repeatToBar(pattern))
+    return buildBar(basicShapes(level, pattern, rng))
   })
 }
 

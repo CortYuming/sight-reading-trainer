@@ -11,9 +11,12 @@ root.style.cssText = 'font-family: system-ui, sans-serif; margin: 24px; backgrou
 
 const intro = document.createElement('p')
 intro.textContent =
-  '全レベルとも繰り返し方式：1小節につき形を1回引き、小節が埋まるまで繰り返す' +
+  'レベル1・2は繰り返し方式：1小節につき形を1回引き、小節が埋まるまで繰り返す' +
   '（1拍の形なら4回、2拍の形なら2回）。' +
-  '各レベルはそこで「増える形」だけを並べている（下のレベルの形も出続ける）。'
+  'レベル3以降はプールが薄いので、その形が1拍おきに入り、残りの拍は' +
+  'レベル1（休符なしの回）またはレベル2（休符ありの回）の1拍の形が埋める。' +
+  'つまり2拍のまとまりを2回繰り返した小節になる。' +
+  '以下は各レベルで「増える形」だけを並べたもの（下は増える形の繰り返しで描いている）。'
 intro.style.cssText = 'font-size: 13px; color: #444; max-width: 640px; line-height: 1.7'
 root.append(intro)
 

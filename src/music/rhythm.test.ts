@@ -10,6 +10,7 @@ import {
   generateBarRhythms,
   hasTies,
   isMixed,
+  partnersFor,
   patternBeats,
   patternsFor,
   templateTicks,
@@ -19,13 +20,19 @@ import { createRng } from './random'
 
 const SEEDS = Array.from({ length: 60 }, (_, i) => i * 7 + 1)
 
-/** The bar as a string of shapes, so a whole bar can be compared in one go. */
+/**
+ * The bar as a string of shapes, so a whole bar can be compared in one go. The
+ * tuplet count is part of it: three eighths under a bracket and three plain
+ * ones are different bars, and without it they read the same.
+ */
 const barShape = (events: ReturnType<typeof generateBarRhythm>): string =>
-  events.map((e) => `${e.dur}:${e.dots}:${e.rest}`).join('+')
+  events.map((e) => `${e.dur}:${e.dots}:${e.rest}:${e.tuplet?.numNotes ?? 0}`).join('+')
 
 /** The shapes of one pool pattern, in the same notation as `barShape`. */
 const cellShapes = (pattern: (typeof BEAT_PATTERNS)[number]): string[] =>
-  pattern.notes.map((n) => `${n.dur}:${n.dots ?? 0}:${n.rest ?? false}`)
+  pattern.notes.map(
+    (n) => `${n.dur}:${n.dots ?? 0}:${n.rest ?? false}:${pattern.tuplet?.[0] ?? 0}`,
+  )
 
 /**
  * Whether the bar can be read as pool shapes laid end to end. A two-beat shape
@@ -35,7 +42,7 @@ const tilesWith = (
   events: ReturnType<typeof generateBarRhythm>,
   pool: (typeof BEAT_PATTERNS)[number][],
 ): boolean => {
-  const shapes = events.map((e) => `${e.dur}:${e.dots}:${e.rest}`)
+  const shapes = events.map((e) => `${e.dur}:${e.dots}:${e.rest}:${e.tuplet?.numNotes ?? 0}`)
   const fits = (at: number): boolean =>
     at === shapes.length ||
     pool.some((pattern) => {
@@ -49,6 +56,21 @@ const tilesWith = (
 const repeatedShape = (pattern: (typeof BEAT_PATTERNS)[number]): string => {
   const cell = cellShapes(pattern).join('+')
   return Array.from({ length: BEATS_PER_BAR / patternBeats(pattern) }, () => cell).join('+')
+}
+
+/**
+ * Every bar a basic level can build from one of its own shapes: the shape
+ * repeated where the level fills a bar alone, and otherwise the two-beat cell
+ * played twice, either way round, once per borrowed shape.
+ */
+const basicBars = (level: Level, pattern: (typeof BEAT_PATTERNS)[number]): string[] => {
+  const partners = partnersFor(level)
+  if (partners.length === 0) return [repeatedShape(pattern)]
+  const own = cellShapes(pattern).join('+')
+  return partners.flatMap((partner) => {
+    const borrowed = cellShapes(partner).join('+')
+    return [`${own}+${borrowed}+${own}+${borrowed}`, `${borrowed}+${own}+${borrowed}+${own}`]
+  })
 }
 
 describe('templateTicks', () => {
@@ -181,12 +203,54 @@ describe('generateBarRhythm', () => {
     }
   })
 
-  it('repeats one shape until the bar is full through the basics', () => {
+  it('builds a bar that repeats itself through the basics', () => {
     for (const level of LEVELS.filter((l) => !isMixed(l))) {
-      const expected = new Set(patternsFor(level).map(repeatedShape))
+      const expected = new Set(patternsFor(level).flatMap((p) => basicBars(level, p)))
       for (const seed of SEEDS) {
         const bar = barShape(generateBarRhythm(level, createRng(seed)))
         expect(`level ${level}: ${expected.has(bar)}`).toBe(`level ${level}: true`)
+      }
+    }
+  })
+
+  it('pairs a thin pool with a shape borrowed from the level it answers', () => {
+    for (const level of [3, 4, 5, 6] as Level[]) {
+      const partners = partnersFor(level)
+      expect(`level ${level}: ${partners.length > 0}`).toBe(`level ${level}: true`)
+      // Borrowed from the lowest basic level of the same parity, so a level
+      // free of rests stays free of them and one about rests stays about them.
+      expect(`level ${level}: from ${[...new Set(partners.map((p) => p.level))]}`).toBe(
+        `level ${level}: from ${level % 2 === 1 ? 1 : 2}`,
+      )
+      for (const partner of partners) {
+        // One beat, since it takes every other beat of the bar.
+        expect(`${partner.id}: ${patternBeats(partner)} beat`).toBe(`${partner.id}: 1 beat`)
+      }
+      // Which is the point of it: a page draws far more bars than the pool has
+      // shapes in it. Level 3 was four bars before, and is thirty-two now.
+      const drawn = new Set(SEEDS.map((seed) => barShape(generateBarRhythm(level, createRng(seed)))))
+      expect(`level ${level}: ${drawn.size > patternsFor(level).length}`).toBe(
+        `level ${level}: true`,
+      )
+    }
+  })
+
+  it('leaves the floor of each parity, and the mixed levels, borrowing nothing', () => {
+    // Levels 1 and 2 answer to no one and fill a bar on their own; from 7 the
+    // beats are drawn one at a time and there is nothing to pair.
+    for (const level of LEVELS.filter((l) => l <= 2 || isMixed(l))) {
+      expect(`level ${level}: ${partnersFor(level).length} borrowed`).toBe(
+        `level ${level}: 0 borrowed`,
+      )
+    }
+  })
+
+  it('sounds the level\'s own shape in half of every bar', () => {
+    for (const level of [3, 4, 5, 6] as Level[]) {
+      for (const seed of SEEDS) {
+        const bar = barShape(generateBarRhythm(level, createRng(seed)))
+        const own = patternsFor(level).filter((p) => basicBars(level, p).includes(bar))
+        expect(`level ${level} seed ${seed}: ${own.length}`).toBe(`level ${level} seed ${seed}: 1`)
       }
     }
   })
@@ -278,17 +342,31 @@ describe('generateBarRhythm', () => {
     }
   })
 
-  it('gives every tuplet group its ratio, one group per beat', () => {
-    for (const seed of SEEDS) {
-      const events = generateBarRhythm(6, createRng(seed))
-      const tuplets = events.filter((e) => e.tuplet)
-      if (tuplets.length === 0) continue
-      expect(tuplets).toHaveLength(events.length)
-      expect(new Set(tuplets.map((e) => e.tuplet!.group)).size).toBe(4)
-      for (const event of tuplets) {
-        expect([3, 6]).toContain(event.tuplet!.numNotes)
+  it('gives every tuplet group its ratio, and a beat of the bar to itself', () => {
+    // How many beats of a bar are grouped depends on what the level draws and
+    // what it borrows; what holds either way is that a group is one beat.
+    let seen = 0
+    for (const level of [5, 6, 9, 10] as Level[]) {
+      for (const seed of SEEDS) {
+        const events = generateBarRhythm(level, createRng(seed))
+        const groups = new Map<number, ReturnType<typeof generateBarRhythm>>()
+        for (const event of events) {
+          if (!event.tuplet) continue
+          groups.set(event.tuplet.group, [...(groups.get(event.tuplet.group) ?? []), event])
+        }
+        for (const [group, members] of groups) {
+          seen++
+          const ticks = members.reduce((sum, e) => sum + e.ticks, 0)
+          const ratios = new Set(members.map((e) => e.tuplet!.numNotes))
+          expect(`group ${group}: ${ticks} ticks, ratios ${[...ratios]}`).toBe(
+            `group ${group}: ${TICKS_PER_BEAT} ticks, ratios ${members[0].tuplet!.numNotes}`,
+          )
+          expect([3, 6]).toContain(members[0].tuplet!.numNotes)
+          expect(members[0].start).toBe(group * TICKS_PER_BEAT)
+        }
       }
     }
+    expect(seen).toBeGreaterThan(0)
   })
 
   it('climbs through the pool before it starts repeating itself', () => {
@@ -299,8 +377,11 @@ describe('generateBarRhythm', () => {
       // The first two thirds walk the pool from its easiest shape to its
       // hardest, never stepping back.
       const climbing = bars.slice(0, 8).map(barShape)
-      const order = pool.map(repeatedShape)
-      const seen = climbing.map((s) => order.indexOf(s))
+      const order = new Map<string, number>()
+      pool.forEach((pattern, i) => {
+        for (const bar of basicBars(level, pattern)) order.set(bar, i)
+      })
+      const seen = climbing.map((s) => order.get(s) ?? -1)
       expect(seen.some((i) => i < 0)).toBe(false)
       for (let i = 1; i < seen.length; i++) expect(seen[i]).toBeGreaterThanOrEqual(seen[i - 1])
       expect(seen[0]).toBe(0)

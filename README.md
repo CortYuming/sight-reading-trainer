@@ -110,11 +110,11 @@ keep the height they had.
 - The **bass** walks in quarter notes: the root on beat 1, chord tones on beats
   2-3, and a chromatic or dominant approach into the next bar on beat 4.
   Range: written E3-E4, i.e. strings 6-4.
-- The **melody** draws one rhythm per bar — a beat long, or two where the
-  shape straddles them — and repeats it until the bar is full, then borrows
-  pitches from the chord and its scale — chord tones on the beat, stepwise
-  motion in between. Range: written G4-B5, i.e. strings 3-1. A bar therefore
-  carries a single rhythm, and the reading is in the pitches.
+- The **melody** builds a bar that repeats itself — one rhythm laid down until
+  the bar is full, or a two-beat cell played twice — then borrows pitches from
+  the chord and its scale: chord tones on the beat, stepwise motion in between.
+  Range: written G4-B5, i.e. strings 3-1. A bar therefore says the same thing
+  twice, and the reading is in the pitches.
 - Levels climb in pairs. An odd level opens a set of rest-free shapes and the
   even level above answers them with the same shapes carrying a rest, so a
   rhythm is always met plain before it is met broken up:
@@ -131,6 +131,29 @@ keep the height they had.
   A level brings only its own shapes. Carrying the earlier ones along would
   just repeat the levels below, and going back a level is the way to practise
   those. Pool sizes: 6, 8, 4, 6, 3, 3.
+
+  A pool that thin cannot fill a page on its own: four shapes laid down four
+  times over would make level 3 a page with four bars in it, off by heart on
+  the second read. So a level's own shape takes every other beat of the bar and
+  one **borrowed** takes the rest. The bar is a two-beat cell played twice, so
+  it still reads as a figure rather than four unrelated beats, and the level's
+  own shape still sounds in half of every bar:
+
+  | Level | Borrows from | Bars it can draw |
+  |---|---|---|
+  | 1 | — | 6 |
+  | 2 | — | 8 |
+  | 3 | level 1 | 4 × 4 × 2 = 32, was 4 |
+  | 4 | level 2 | 6 × 6 × 2 = 72, was 6 |
+  | 5 | level 1 | 3 × 4 × 2 = 24, was 3 |
+  | 6 | level 2 | 3 × 6 × 2 = 36, was 3 |
+
+  A level borrows from the lowest basic level of its own parity: rest-free from
+  level 1, rest-carrying from level 2, so an odd level stays free of rests and
+  an even one stays about them. Levels 1 and 2 are themselves the lowest of
+  their parity, so they answer to no one and fill a bar with one shape, which
+  six and eight shapes deep is enough to do. Only the one-beat shapes are
+  borrowed, and which of the two opens the bar is drawn per bar.
 
   Most shapes fill one beat; the two that open level 1 fill two, and a bar of
   those is the shape twice rather than four times. A plain quarter is in the
