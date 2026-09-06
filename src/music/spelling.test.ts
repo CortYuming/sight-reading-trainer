@@ -1,16 +1,32 @@
 import { describe, expect, it } from 'vitest'
 import { parseChord } from './chord'
-import { chordScaleSpelling, spellSequence, spelledName, spelledVexKey } from './spelling'
+import {
+  chordScaleSpelling,
+  keySignature,
+  spellSequence,
+  spelledName,
+  spelledVexKey,
+} from './spelling'
 import { generateExercise } from './exercise'
-import { KEYS } from './pitch'
+import type { KeyDef } from './pitch'
+import { KEYS, findKey } from './pitch'
 import { PROGRESSIONS } from './progression'
 import type { Level } from './rhythm'
 
-function names(midis: number[], chordText: string, prefer: 'sharp' | 'flat', nextText?: string) {
+/** A key with no signature of its own, so only the chord decides a spelling. */
+const bare = (prefer: 'sharp' | 'flat'): KeyDef => ({ name: 'C', root: 0, prefer })
+
+function names(
+  midis: number[],
+  chordText: string,
+  prefer: 'sharp' | 'flat',
+  nextText?: string,
+  key: KeyDef = bare(prefer),
+) {
   const chord = parseChord(chordText, prefer)
   const next = nextText ? parseChord(nextText, prefer) : undefined
-  const map = chordScaleSpelling(chord, next, prefer)
-  return spellSequence(midis, map, prefer).map((p) => (p === null ? 'r' : spelledName(p)))
+  const map = chordScaleSpelling(chord, next, key)
+  return spellSequence(midis, map, key).map((p) => (p === null ? 'r' : spelledName(p)))
 }
 
 describe('chordScaleSpelling', () => {
@@ -34,7 +50,7 @@ describe('chordScaleSpelling', () => {
     expect(names([64, 65, 68, 69], 'E7', 'sharp', 'Am7')).toEqual(['E4', 'F4', 'G#4', 'A4'])
   })
 
-  it('avoids Cb and B#', () => {
+  it('avoids Cb and B# unless the key signature writes them', () => {
     for (const key of KEYS) {
       for (const progression of PROGRESSIONS) {
         for (const level of [1, 2, 3, 4] as Level[]) {
@@ -44,19 +60,34 @@ describe('chordScaleSpelling', () => {
             level,
             seed: 77,
           })
+          const signature = keySignature(key)
           for (const bar of exercise.bars) {
             const spelled = [...bar.bass, ...bar.melody.map((e) => e.spelled)]
             for (const pitch of spelled) {
               if (!pitch) continue
-              expect(`${pitch.letter}${pitch.accidental}`).not.toBe('Cb')
-              expect(`${pitch.letter}${pitch.accidental}`).not.toBe('Fb')
-              expect(`${pitch.letter}${pitch.accidental}`).not.toBe('B#')
-              expect(`${pitch.letter}${pitch.accidental}`).not.toBe('E#')
+              // Free where the signature carries it — E# in F# major — and an
+              // accidental nobody wants to read anywhere else.
+              if (signature.get(pitch.letter) === pitch.accidental) continue
+              expect(['Cb', 'Fb', 'B#', 'E#']).not.toContain(
+                `${pitch.letter}${pitch.accidental}`,
+              )
             }
           }
         }
       }
     }
+  })
+})
+
+describe('a spelling the key signature already carries', () => {
+  it('writes the seventh of F#maj7 as E#, not as an F natural', () => {
+    expect(names([89], 'F#maj7', 'sharp', undefined, findKey('F#'))).toEqual(['E#6'])
+    expect(names([89], 'C#7', 'sharp', undefined, findKey('F#'))).toEqual(['E#6'])
+  })
+
+  it('still falls back where the signature does not write it', () => {
+    // The same chord in C, where E# would need an accidental of its own.
+    expect(names([89], 'C#7', 'sharp')).toEqual(['F6'])
   })
 })
 
@@ -68,8 +99,8 @@ describe('spellSequence', () => {
   })
 
   it('passes rests through', () => {
-    const map = chordScaleSpelling(parseChord('Cmaj7'), undefined, 'sharp')
-    expect(spellSequence([60, null, 62], map, 'sharp').map((p) => p?.midi ?? null)).toEqual([
+    const map = chordScaleSpelling(parseChord('Cmaj7'), undefined, bare('sharp'))
+    expect(spellSequence([60, null, 62], map, bare('sharp')).map((p) => p?.midi ?? null)).toEqual([
       60,
       null,
       62,
