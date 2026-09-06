@@ -41,6 +41,11 @@ Generation, notation and playback all work, and the page is live at
 - Check that a shape level's name is not cut off in the level menu. The widest
   is `19 — down-down-down` against a 12rem cap in `.field.level select`.
 
+Bigger things, not designed yet, are kept in
+[docs/backlog.md](docs/backlog.md) — what is wanted, what the app already
+does, and the questions still open — rather than here, where an entry is
+something decided and only waiting to be built.
+
 The bundle is 1.2MB, 503kB gzipped, and 288kB of that is the Bravura music
 font, embedded as base64. Serving the woff2 as its own file instead was
 measured at 287kB: gzip recovers the whole of the base64 overhead, so there is
