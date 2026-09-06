@@ -49,6 +49,22 @@ describe('generateExercise', () => {
     expect(exercise.bars.map((b) => b.chord.label)).toEqual([...cycle, ...cycle])
   })
 
+  it('reads the random key out of the seed, and otherwise generates the same bars', () => {
+    const drawn = generateExercise({
+      keyName: 'random',
+      progressionId: 'ii-v-i',
+      level: 2,
+      seed: 99,
+    })
+    const named = generateExercise({
+      keyName: drawn.key.name,
+      progressionId: 'ii-v-i',
+      level: 2,
+      seed: 99,
+    })
+    expect(named).toEqual(drawn)
+  })
+
   it('returns the same exercise for the same seed, and a different one otherwise', () => {
     const options = { keyName: 'F', progressionId: 'blues', level: 3, seed: 2026 } as const
     expect(generateExercise(options)).toEqual(generateExercise(options))
@@ -57,7 +73,7 @@ describe('generateExercise', () => {
 
   it('rejects unknown keys and progressions', () => {
     expect(() =>
-      generateExercise({ keyName: 'Ab', progressionId: 'ii-v-i', level: 1, seed: 1 }),
+      generateExercise({ keyName: 'Gb', progressionId: 'ii-v-i', level: 1, seed: 1 }),
     ).toThrow()
     expect(() =>
       generateExercise({ keyName: 'C', progressionId: 'giant-steps', level: 1, seed: 1 }),

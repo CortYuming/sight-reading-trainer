@@ -4,7 +4,7 @@ import { LEVELS, hasShape, isMixed } from './music/rhythm'
 import type { SwingId } from './audio/schedule'
 import { generateExercise } from './music/exercise'
 import { PROGRESSIONS } from './music/progression'
-import { KEYS } from './music/pitch'
+import { KEYS, RANDOM_KEY } from './music/pitch'
 import { shapeGroups, shapeSummary } from './music/shape'
 import { SWING_SETTINGS, swingRatio } from './audio/schedule'
 import { Player } from './audio/player'
@@ -361,7 +361,15 @@ export default function App() {
 
           <label className="field">
             <span className="field-label">Key</span>
+            {/*
+              Random stays selected rather than turning into the key it drew:
+              the draw is redone from each new seed, so every new exercise
+              arrives somewhere else. Which key it landed in is on the staff —
+              in the signature and in the chord names — so it is something to
+              work out on the way in rather than something the toolbar says.
+            */}
             <select value={keyName} onChange={(e) => setKeyName(e.target.value)}>
+              <option value={RANDOM_KEY}>Random</option>
               {KEYS.map((k) => (
                 <option key={k.name} value={k.name}>
                   {k.name}

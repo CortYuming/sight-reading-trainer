@@ -3,12 +3,14 @@ import {
   BASS_RANGE,
   MELODY_RANGE,
   KEYS,
+  RANDOM_KEY,
   findKey,
   nearestPitch,
   noteName,
   octaveOf,
   pitchClass,
   pitchesWithClass,
+  resolveKey,
   toVexKey,
 } from './pitch'
 
@@ -76,16 +78,52 @@ describe('ranges', () => {
 })
 
 describe('KEYS', () => {
-  it('covers the five practice keys', () => {
-    expect(KEYS.map((k) => k.name)).toEqual(['F', 'Bb', 'Eb', 'C', 'G'])
+  it('covers all twelve, in circle-of-fifths order', () => {
+    expect(KEYS.map((k) => k.name)).toEqual([
+      'C',
+      'F',
+      'Bb',
+      'Eb',
+      'Ab',
+      'Db',
+      'F#',
+      'B',
+      'E',
+      'A',
+      'D',
+      'G',
+    ])
+  })
+
+  it('names every pitch class once', () => {
+    expect(new Set(KEYS.map((k) => k.root)).size).toBe(12)
   })
 
   it('spells flat keys with flats', () => {
     expect(findKey('Bb').prefer).toBe('flat')
+    expect(findKey('Db').prefer).toBe('flat')
     expect(findKey('G').prefer).toBe('sharp')
+    expect(findKey('F#').prefer).toBe('sharp')
   })
 
   it('throws on an unknown key', () => {
-    expect(() => findKey('Ab')).toThrow()
+    expect(() => findKey('Gb')).toThrow()
+    expect(() => findKey(RANDOM_KEY)).toThrow()
+  })
+})
+
+describe('resolveKey', () => {
+  it('hands back a named key as it is', () => {
+    expect(resolveKey('Bb', 1)).toEqual(findKey('Bb'))
+  })
+
+  it('draws the random key from the seed, so a seed keeps its key', () => {
+    expect(resolveKey(RANDOM_KEY, 42)).toEqual(resolveKey(RANDOM_KEY, 42))
+  })
+
+  it('reaches every key across seeds', () => {
+    const drawn = new Set<string>()
+    for (let seed = 0; seed < 500; seed++) drawn.add(resolveKey(RANDOM_KEY, seed).name)
+    expect(drawn.size).toBe(KEYS.length)
   })
 })

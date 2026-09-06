@@ -93,6 +93,13 @@ keep the height they had.
 - **Note names** writes each note's letter beside its head, in the spelling the
   staff uses. Off by default — reading the pitch is the exercise, so the letters
   are there to fall back on. They shrink where a bar is too packed to take them.
+- **Random** in the key list draws one of the twelve instead of naming it, and
+  is drawn again from every new seed, so each new exercise arrives somewhere
+  else. It stays selected rather than turning into the key it drew: which key
+  it landed in is on the staff, in the signature and the chord names, and
+  working that out on the way in is part of the reading. The draw comes out of
+  the seed rather than out of `Math.random`, so going back to an exercise in
+  the history comes back to the key it was read in.
 - Key, form, level, tempo, swing and the five switches are kept in the browser
   and restored on the next visit. The exercise is not: coming back gives a new
   one to read. Changing the level draws a new one as well, since a new level is
@@ -106,7 +113,12 @@ keep the height they had.
 ## How an exercise is built
 
 - A progression (ii-V-I, turnaround, jazz blues, minor ii-V-i, Autumn Leaves A)
-  is transposed into one of five keys: F, Bb, Eb, C, G.
+  is transposed into any of the twelve keys, listed round the circle of fifths
+  so that one entry to the next is one accidental. Where the two spellings meet
+  the key is written **F#** rather than Gb. Six accidentals either way, so the
+  count does not decide it; the chords do — a blues in Gb wants Cb for its IV,
+  which would leave six flats in the signature and a B7 over the bar, where F#
+  gives F#7, B7 and C#7 all of a piece.
 - The **bass** walks in quarter notes: the root on beat 1, chord tones on beats
   2-3, and a chromatic or dominant approach into the next bar on beat 4.
   Range: written E3-E4, i.e. strings 6-4.

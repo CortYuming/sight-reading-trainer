@@ -1,7 +1,7 @@
 import type { ExerciseOptions } from './music/exercise'
 import type { Level } from './music/rhythm'
 import { LEVELS } from './music/rhythm'
-import { KEYS } from './music/pitch'
+import { KEYS, RANDOM_KEY } from './music/pitch'
 import { PROGRESSIONS } from './music/progression'
 
 const STORAGE_KEY = 'sight-reading-trainer:history'
@@ -64,7 +64,9 @@ export function remember(history: HistoryEntry[], entry: HistoryEntry): HistoryE
 function readEntry(stored: unknown): HistoryEntry | null {
   if (stored === null || typeof stored !== 'object') return null
   const { keyName, progressionId, level, seed, at } = stored as Record<string, unknown>
-  if (!KEYS.some((k) => k.name === keyName)) return null
+  // `random` is kept as it is rather than resolved: the key comes back out of
+  // the seed, so the entry still generates the exercise that was read.
+  if (keyName !== RANDOM_KEY && !KEYS.some((k) => k.name === keyName)) return null
   if (!PROGRESSIONS.some((p) => p.id === progressionId)) return null
   if (!LEVELS.includes(level as Level)) return null
   if (typeof seed !== 'number' || !Number.isInteger(seed)) return null

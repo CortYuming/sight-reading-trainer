@@ -6,7 +6,7 @@ import type { Progression } from './progression'
 import type { SpelledPitch } from './spelling'
 import { buildProgression, findProgression } from './progression'
 import { createRng } from './random'
-import { findKey } from './pitch'
+import { resolveKey } from './pitch'
 import { generateBarRhythms } from './rhythm'
 import { generateBass } from './bass'
 import { generateMelody } from './melody'
@@ -40,7 +40,7 @@ export interface ExerciseOptions {
 }
 
 export function generateExercise(options: ExerciseOptions): Exercise {
-  const key = findKey(options.keyName)
+  const key = resolveKey(options.keyName, options.seed)
   const progression = findProgression(options.progressionId)
   const rng = createRng(options.seed)
 
@@ -53,15 +53,15 @@ export function generateExercise(options: ExerciseOptions): Exercise {
   let lastMelody: number | null = null
 
   const bars = chords.map((chord, i): ExerciseBar => {
-    const scaleMap = chordScaleSpelling(chord, chords[(i + 1) % chords.length], key.prefer)
+    const scaleMap = chordScaleSpelling(chord, chords[(i + 1) % chords.length], key)
 
-    const spelledBass = spellSequence(bass[i], scaleMap, key.prefer, lastBass)
+    const spelledBass = spellSequence(bass[i], scaleMap, key, lastBass)
     lastBass = bass[i][bass[i].length - 1]
 
     const spelledMelody = spellSequence(
       melody[i].map((event) => event.midi),
       scaleMap,
-      key.prefer,
+      key,
       lastMelody,
     )
     const sounded = melody[i].filter((event) => event.midi !== null)

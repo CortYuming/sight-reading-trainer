@@ -2,7 +2,7 @@ import type { Level } from './music/rhythm'
 import type { SwingId } from './audio/schedule'
 import { LEVELS } from './music/rhythm'
 import { SWING_SETTINGS } from './audio/schedule'
-import { KEYS } from './music/pitch'
+import { KEYS, RANDOM_KEY } from './music/pitch'
 import { PROGRESSIONS } from './music/progression'
 
 const STORAGE_KEY = 'sight-reading-trainer:settings'
@@ -72,7 +72,7 @@ export function readSettings(stored: unknown): Settings {
   return {
     keyName: oneOf(
       raw.keyName,
-      KEYS.map((k) => k.name),
+      [RANDOM_KEY, ...KEYS.map((k) => k.name)],
       DEFAULT_SETTINGS.keyName,
     ),
     progressionId: oneOf(

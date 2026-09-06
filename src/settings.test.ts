@@ -18,9 +18,13 @@ describe('readSettings', () => {
   })
 
   it('drops a value that is no longer offered without losing the others', () => {
-    const settings = readSettings({ keyName: 'Db', progressionId: 'ii-v-i' })
+    const settings = readSettings({ keyName: 'Gb', progressionId: 'ii-v-i' })
     expect(settings.keyName).toBe(DEFAULT_SETTINGS.keyName)
     expect(settings.progressionId).toBe('ii-v-i')
+  })
+
+  it('keeps the random key, which is a choice rather than a stale one', () => {
+    expect(readSettings({ keyName: 'random' }).keyName).toBe('random')
   })
 
   it('clamps the tempo to the range the slider offers', () => {

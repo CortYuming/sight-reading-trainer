@@ -1,3 +1,5 @@
+import { createRng } from './random'
+
 /**
  * Pitch helpers.
  *
@@ -80,17 +82,58 @@ export interface KeyDef {
   prefer: Accidental
 }
 
-/** Keys a jazz guitarist actually meets, plus G for open-position comfort. */
+/**
+ * All twelve keys, in circle-of-fifths order: C, then flats deepening to Db,
+ * then the crossover and sharps thinning back to G. A key signature therefore
+ * changes by one accidental from one entry to the next, which is the order a
+ * reader works through them in.
+ *
+ * Where the two spellings meet the key is written F# rather than Gb. Six
+ * accidentals either way, so the count does not decide it; the chords do. A
+ * blues in Gb wants Cb for its IV, which this app spells B, leaving a chart
+ * with six flats in the signature and a B7 over the bar. In F# the same
+ * chords come out F#7, B7, C#7, all of a piece.
+ */
 export const KEYS: KeyDef[] = [
+  { name: 'C', root: 0, prefer: 'sharp' },
   { name: 'F', root: 5, prefer: 'flat' },
   { name: 'Bb', root: 10, prefer: 'flat' },
   { name: 'Eb', root: 3, prefer: 'flat' },
-  { name: 'C', root: 0, prefer: 'sharp' },
+  { name: 'Ab', root: 8, prefer: 'flat' },
+  { name: 'Db', root: 1, prefer: 'flat' },
+  { name: 'F#', root: 6, prefer: 'sharp' },
+  { name: 'B', root: 11, prefer: 'sharp' },
+  { name: 'E', root: 4, prefer: 'sharp' },
+  { name: 'A', root: 9, prefer: 'sharp' },
+  { name: 'D', root: 2, prefer: 'sharp' },
   { name: 'G', root: 7, prefer: 'sharp' },
 ]
+
+/**
+ * Stands among the keys for "draw one". It is not a key itself: it is resolved
+ * to one of the twelve when the exercise is generated.
+ */
+export const RANDOM_KEY = 'random'
+
+/**
+ * Keeps the draw off the stream the exercise itself is generated from, so that
+ * a random draw landing on Bb gives the same bars as asking for Bb outright.
+ */
+const KEY_DRAW_SALT = 0x9e3779b9
 
 export function findKey(name: string): KeyDef {
   const key = KEYS.find((k) => k.name === name)
   if (!key) throw new Error(`unknown key: ${name}`)
   return key
+}
+
+/**
+ * The key an exercise is actually in. A random key is drawn from the seed
+ * rather than from Math.random, so the exercise stays reproducible: coming
+ * back to a seed comes back to the key it was read in, and the reader is not
+ * handed a different one on the way.
+ */
+export function resolveKey(name: string, seed: number): KeyDef {
+  if (name !== RANDOM_KEY) return findKey(name)
+  return KEYS[createRng(seed ^ KEY_DRAW_SALT).int(KEYS.length)]
 }

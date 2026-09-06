@@ -69,7 +69,7 @@ describe('readHistory', () => {
   it('drops an entry it could not generate again, and keeps the rest', () => {
     const stored = [
       entry(1),
-      { ...entry(2), keyName: 'Db' },
+      { ...entry(2), keyName: 'Gb' },
       { ...entry(3), progressionId: 'rhythm-changes' },
       { ...entry(4), level: 99 },
       { ...entry(5), seed: 'random' },
@@ -78,6 +78,10 @@ describe('readHistory', () => {
       entry(6),
     ]
     expect(readHistory(stored).map((e) => e.seed)).toEqual([1, 6])
+  })
+
+  it('keeps an entry read in the random key, which the seed generates again', () => {
+    expect(readHistory([{ ...entry(8), keyName: 'random' }]).map((e) => e.seed)).toEqual([8])
   })
 
   it('never returns more than it stores', () => {
