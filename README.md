@@ -128,10 +128,32 @@ keep the height they had.
   2-3, and a chromatic or dominant approach into the next bar on beat 4.
   Range: written E3-E4, i.e. strings 6-4.
 - The **melody** builds a bar that repeats itself — one rhythm laid down until
-  the bar is full, or a two-beat cell played twice — then borrows pitches from
-  the chord and its scale: chord tones on the beat, stepwise motion in between.
-  Range: written G4-B5, i.e. strings 3-1. A bar therefore says the same thing
-  twice, and the reading is in the pitches.
+  the bar is full, or a two-beat cell played twice — and the pitches now repeat
+  with it: the figure is pitched once and then moved a degree up or down the
+  scale for each go round, so a bar reads as one figure sequenced rather than as
+  the same rhythm saying two unrelated things. Chord tones still land on the
+  beat, so the line agrees with the walking bass, and the notes between them
+  still move by step. Three things shape it beyond that:
+  - It **runs**. Three to six notes lean the way the line is already going, and
+    the two to four after them are left alone. Distance from the last note,
+    which used to be the whole of the weighting, has no memory of direction and
+    wanders; leaning every note one way instead came out insistent, and the
+    rests between the runs are what stop the device becoming a tic.
+  - It is **aimed at the bar after it**. The chord tone a bar opens on is chosen
+    by the bar before. Where no figure is being sequenced — the mixed levels,
+    whose beats are drawn one at a time — that bar's last note becomes a
+    semitone neighbour of the landing, which is the approach the bass already
+    plays on beat 4. Where a figure is running, its last note is the end of the
+    figure: overwriting it broke the sequence just as it landed, so there only
+    the landing is aimed and the figure is left to finish.
+  - It **leaves the scale**, on about one off-beat note in twenty-five, by a
+    semitone in the direction it was already travelling. Rare on purpose: a
+    chromatic passing note is what a jazz line is full of and what a reader has
+    to work for, and at any real frequency the page stops being a reading
+    exercise. Blue notes in the scale itself were tried first and coloured every
+    bar rather than the odd note.
+
+  Range: written G4-B5, i.e. strings 3-1.
 - Levels climb in pairs. An odd level opens a set of rest-free shapes and the
   even level above answers them with the same shapes carrying a rest, so a
   rhythm is always met plain before it is met broken up:
