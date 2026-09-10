@@ -13,6 +13,7 @@ import {
   partnersFor,
   patternBeats,
   patternsFor,
+  repeatPeriod,
   templateTicks,
   totalTicks,
 } from './rhythm'
@@ -398,5 +399,71 @@ describe('generateBarRhythm', () => {
     const a = generateBarRhythm(6, createRng(42))
     const b = generateBarRhythm(6, createRng(42))
     expect(a).toEqual(b)
+  })
+})
+
+/**
+ * A slice of a bar written out the way `repeatPeriod` compares slices, so the
+ * test checks the bar really does repeat rather than trusting the function.
+ */
+const slice = (
+  events: ReturnType<typeof generateBarRhythm>,
+  from: number,
+  length: number,
+): string =>
+  events
+    .filter((e) => e.start >= from && e.start < from + length)
+    .map((e) => `${e.start - from}:${e.ticks}:${e.rest}:${e.tie}`)
+    .join('|')
+
+describe('repeatPeriod', () => {
+  // Through the basics a bar is built to say the same thing more than once —
+  // one shape until the bar is full at levels 1 and 2, a two-beat cell played
+  // twice from level 3 — and the melody leans on that to sequence its figure.
+  it('finds the figure every basic bar repeats', () => {
+    for (const level of [1, 2, 3, 4, 5, 6] as Level[]) {
+      for (const seed of SEEDS) {
+        const events = generateBarRhythm(level, createRng(seed))
+        const period = repeatPeriod(events)
+        expect(period).not.toBeNull()
+        if (period === null) continue
+
+        // Levels 1 and 2 lay one shape down, so the period is however long that
+        // shape is; from level 3 the bar is a two-beat cell played twice.
+        if (level >= 3) expect(period).toBe(TICKS_PER_BEAT * 2)
+        else expect([TICKS_PER_BEAT, TICKS_PER_BEAT * 2]).toContain(period)
+
+        for (let start = period; start < TICKS_PER_BAR; start += period) {
+          expect(slice(events, start, period)).toBe(slice(events, 0, period))
+        }
+      }
+    }
+  })
+
+  // The mixed levels draw their beats one at a time, so a bar mostly repeats
+  // nothing. Where one happens to come out as a repeat it is a repeat, and the
+  // melody is welcome to sequence it.
+  it('mostly finds nothing where the beats were drawn one at a time', () => {
+    let repeating = 0
+    let bars = 0
+    for (const level of [7, 8, 9, 10] as Level[]) {
+      for (const seed of SEEDS) {
+        bars++
+        if (repeatPeriod(generateBarRhythm(level, createRng(seed))) !== null) repeating++
+      }
+    }
+    expect(bars).toBeGreaterThan(100)
+    expect(repeating / bars).toBeLessThan(0.1)
+  })
+
+  it('finds nothing in a bar that changes shape halfway', () => {
+    const events = [
+      { dur: 'q' as const, dots: 0, ticks: 12, rest: false, start: 0, tie: false },
+      { dur: 'q' as const, dots: 0, ticks: 12, rest: false, start: 12, tie: false },
+      { dur: '8' as const, dots: 0, ticks: 6, rest: false, start: 24, tie: false },
+      { dur: '8' as const, dots: 0, ticks: 6, rest: false, start: 30, tie: false },
+      { dur: 'q' as const, dots: 0, ticks: 12, rest: false, start: 36, tie: false },
+    ]
+    expect(repeatPeriod(events)).toBeNull()
   })
 })

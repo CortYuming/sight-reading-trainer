@@ -502,6 +502,40 @@ function applyTies(events: BarEvent[], rng: Rng): void {
   }
 }
 
+/**
+ * The length of the figure a bar repeats, in ticks, or null where it repeats
+ * nothing.
+ *
+ * Through the basics a bar is built to say the same thing more than once: one
+ * shape laid down until the bar is full at levels 1 and 2, and a two-beat cell
+ * played twice from level 3. Reading that length back off the bar is what lets
+ * the pitches repeat with it. The mixed levels draw their beats one at a time,
+ * so they mostly repeat nothing and come back null.
+ */
+export function repeatPeriod(events: BarEvent[]): number | null {
+  for (const period of [TICKS_PER_BEAT, TICKS_PER_BEAT * 2]) {
+    const first = signature(events, 0, period)
+    if (first === '') continue
+    let repeats = true
+    for (let start = period; start < TICKS_PER_BAR; start += period) {
+      if (signature(events, start, period) !== first) {
+        repeats = false
+        break
+      }
+    }
+    if (repeats) return period
+  }
+  return null
+}
+
+/** One slice of a bar written out, so two slices can be compared in one go. */
+function signature(events: BarEvent[], from: number, length: number): string {
+  return events
+    .filter((e) => e.start >= from && e.start < from + length)
+    .map((e) => `${e.start - from}:${e.ticks}:${e.rest ? 'r' : 'n'}${e.tie ? 't' : ''}`)
+    .join('|')
+}
+
 export function totalTicks(events: BarEvent[]): number {
   return events.reduce((sum, e) => sum + e.ticks, 0)
 }
