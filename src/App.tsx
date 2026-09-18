@@ -238,13 +238,15 @@ export default function App() {
           event.preventDefault()
           stepBar(1)
           break
+        // Up and down follow the list rather than the ladder: level 1 sits at
+        // the top of it, and a select under the same keys moves that way too.
         case 'ArrowUp':
           event.preventDefault()
-          stepLevel(1)
+          stepLevel(-1)
           break
         case 'ArrowDown':
           event.preventDefault()
-          stepLevel(-1)
+          stepLevel(1)
           break
         case 'r':
           event.preventDefault()
@@ -570,7 +572,7 @@ export default function App() {
         </p>
         <p className="note keys">
           <kbd>&#8592;</kbd> previous bar &middot; <kbd>&#8594;</kbd> next bar &middot;{' '}
-          <kbd>&#8593;</kbd> level up &middot; <kbd>&#8595;</kbd> level down &middot;{' '}
+          <kbd>&#8593;</kbd> level down &middot; <kbd>&#8595;</kbd> level up &middot;{' '}
           <kbd>R</kbd> repeat this bar &middot; <kbd>space</kbd> play/stop
         </p>
       </main>

@@ -76,7 +76,9 @@ keep the height they had.
   from the list: a new exercise at the new level, read from the top. Whatever
   was sounding carries straight on into it without a count-in — being sent back
   to Play at every rung of the ladder is a break in the practice rather than a
-  help.
+  help. They move the way the list reads rather than the way the ladder climbs:
+  level 1 is at the top of it, so **up** is the easier way, which is also where
+  the same keys would take the select itself.
 - Moves land on the next barline rather than the instant they are pressed, so
   the bar being read is never cut in half. The queued bar is marked with a
   dashed line in the margin.
