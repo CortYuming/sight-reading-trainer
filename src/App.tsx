@@ -29,6 +29,9 @@ const LAST_LEVEL = LEVELS[LEVELS.length - 1]
  */
 const TEMPO_URL_DELAY = 300
 
+/** What shift and a bar key move the tempo by: enough to hear, small enough to aim. */
+const TEMPO_STEP = 5
+
 /** What the player should loop: the one bar being repeated, or the lot. */
 const loopFor = (bar: number, repeat: boolean): number | null => (repeat ? bar : null)
 
@@ -221,6 +224,19 @@ export default function App() {
     [changeLevel, level],
   )
 
+  const applyBpm = useCallback((value: number) => {
+    setBpm(value)
+    setBpmText(String(value))
+  }, [])
+
+  // Held down, the bar keys move the tempo instead. It takes effect on the
+  // running transport, so the music speeds up under the reader rather than
+  // starting again.
+  const stepTempo = useCallback(
+    (delta: number) => applyBpm(clampTempo(bpm + delta)),
+    [applyBpm, bpm],
+  )
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target
@@ -232,19 +248,25 @@ export default function App() {
       switch (event.key.length === 1 ? event.key.toLowerCase() : event.key) {
         case 'ArrowLeft':
           event.preventDefault()
-          stepBar(-1)
+          if (event.shiftKey) stepTempo(-TEMPO_STEP)
+          else stepBar(-1)
           break
         case 'ArrowRight':
           event.preventDefault()
-          stepBar(1)
+          if (event.shiftKey) stepTempo(TEMPO_STEP)
+          else stepBar(1)
           break
-        // Up and down follow the list rather than the ladder: level 1 sits at
-        // the top of it, and a select under the same keys moves that way too.
+        // The levels sit behind shift with the tempo, so the four arrows on
+        // their own stay what they were: reading through the bars. Up and down
+        // follow the list rather than the ladder — level 1 is at the top of
+        // it, and a select under the same keys moves that way too.
         case 'ArrowUp':
+          if (!event.shiftKey) break
           event.preventDefault()
           stepLevel(-1)
           break
         case 'ArrowDown':
+          if (!event.shiftKey) break
           event.preventDefault()
           stepLevel(1)
           break
@@ -260,7 +282,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [stepBar, stepLevel, toggleBarRepeat, toggle])
+  }, [stepBar, stepLevel, stepTempo, toggleBarRepeat, toggle])
 
   // Tempo and mutes take effect without interrupting playback.
   useEffect(() => player.setBpm(bpm), [player, bpm])
@@ -337,11 +359,6 @@ export default function App() {
     playDrums,
     showNoteNames,
   ])
-
-  const applyBpm = (value: number) => {
-    setBpm(value)
-    setBpmText(String(value))
-  }
 
   /*
    * A number is taken as it is typed, and only held to the range once the box
@@ -572,8 +589,10 @@ export default function App() {
         </p>
         <p className="note keys">
           <kbd>&#8592;</kbd> previous bar &middot; <kbd>&#8594;</kbd> next bar &middot;{' '}
-          <kbd>&#8593;</kbd> level down &middot; <kbd>&#8595;</kbd> level up &middot;{' '}
-          <kbd>R</kbd> repeat this bar &middot; <kbd>space</kbd> play/stop
+          <kbd>shift</kbd>+<kbd>&#8592;</kbd>/<kbd>&#8594;</kbd> tempo by {TEMPO_STEP} &middot;{' '}
+          <kbd>shift</kbd>+<kbd>&#8593;</kbd> level down &middot;{' '}
+          <kbd>shift</kbd>+<kbd>&#8595;</kbd> level up &middot; <kbd>R</kbd> repeat this bar{' '}
+          &middot; <kbd>space</kbd> play/stop
         </p>
       </main>
     </div>

@@ -72,23 +72,29 @@ keep the height they had.
 - **Left** and **right** step through the bars, **R** loops the current bar on
   its own. The same controls sit in the toolbar for touch, and clicking a row
   jumps to that bar.
-- **Up** and **down** move a level at a time, which is the same as picking one
-  from the list: a new exercise at the new level, read from the top. Whatever
-  was sounding carries straight on into it without a count-in — being sent back
-  to Play at every rung of the ladder is a break in the practice rather than a
-  help. They move the way the list reads rather than the way the ladder climbs:
-  level 1 is at the top of it, so **up** is the easier way, which is also where
-  the same keys would take the select itself.
+- **Shift** and the arrows change what is being read rather than where it is
+  read from: **shift-left** and **shift-right** move the tempo by 5, and
+  **shift-up** and **shift-down** move a level at a time. The arrows on their
+  own stay with the bars, which is what they are wanted for most.
+- Stepping a level is the same as picking one from the list: a new exercise at
+  the new level, read from the top. Whatever was sounding carries straight on
+  into it without a count-in — being sent back to Play at every rung of the
+  ladder is a break in the practice rather than a help. The keys move the way
+  the list reads rather than the way the ladder climbs: level 1 is at the top
+  of it, so **shift-up** is the easier way, which is also where the same key
+  would take the select itself.
 - Moves land on the next barline rather than the instant they are pressed, so
   the bar being read is never cut in half. The queued bar is marked with a
   dashed line in the margin.
 - Swing has four depths. Measurements of jazz drummers put the ratio near 3.5:1
   at slow tempos and close to 1:1 above 250bpm; the default sits in the middle,
   at the 2:1 triplet feel the notation implies.
-- **Tempo** is dragged on the slider or typed into the box beside it. What is
-  typed stands as it is until the box is left or Enter is pressed, and is held
-  to 40-240 only then: correcting every keystroke would put 45 out of reach,
-  since the 4 on the way to it is below the minimum.
+- **Tempo** is dragged on the slider, typed into the box beside it, or stepped
+  by 5 with **shift-left** and **shift-right**. It takes effect on the running
+  transport, so the music speeds up under the reader rather than starting
+  again. What is typed stands as it is until the box is left or Enter is
+  pressed, and is held to 40-240 only then: correcting every keystroke would
+  put 45 out of reach, since the 4 on the way to it is below the minimum.
 - **Drums** play the jazz ride pattern — a stroke on every beat and a swung
   eighth after two and four — with the hi-hat foot closing on two and four. The
   swung strokes take the same ratio the melody does, so the kit is what the
