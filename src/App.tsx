@@ -11,11 +11,26 @@ import { Player } from './audio/player'
 import { Score } from './components/Score'
 import { TEMPO_MAX, TEMPO_MIN, clampTempo, loadSettings, saveSettings } from './settings'
 import type { Settings } from './settings'
+import { loadUrlState, saveUrlState } from './url'
 import { entryId, entryLabel, loadHistory, remember, saveHistory } from './history'
 import type { HistoryEntry } from './history'
 import './App.css'
 
 const randomSeed = () => Math.floor(Math.random() * 1_000_000)
+
+const FIRST_LEVEL = LEVELS[0]
+const LAST_LEVEL = LEVELS[LEVELS.length - 1]
+
+/**
+ * How long the tempo has to stand still before it is written to the URL.
+ * Dragging the slider fires on every step, and Safari refuses a history entry
+ * after about a hundred in half a minute, so the writing waits for the hand to
+ * settle. Short enough that letting go and copying the address still gets it.
+ */
+const TEMPO_URL_DELAY = 300
+
+/** What shift and a bar key move the tempo by: enough to hear, small enough to aim. */
+const TEMPO_STEP = 5
 
 /** What the player should loop: the one bar being repeated, or the lot. */
 const loopFor = (bar: number, repeat: boolean): number | null => (repeat ? bar : null)
@@ -25,16 +40,22 @@ export default function App() {
   savedRef.current ??= loadSettings()
   const saved = savedRef.current
 
+  // The level and the tempo come from the address bar rather than from
+  // storage, so a link opens on what it says. Everything else is remembered.
+  const openedRef = useRef<ReturnType<typeof loadUrlState> | null>(null)
+  openedRef.current ??= loadUrlState()
+  const opened = openedRef.current
+
   const [keyName, setKeyName] = useState(saved.keyName)
   const [progressionId, setProgressionId] = useState(saved.progressionId)
-  const [level, setLevel] = useState<Level>(saved.level)
+  const [level, setLevel] = useState<Level>(opened.level)
   const [seed, setSeed] = useState(randomSeed)
 
-  const [bpm, setBpm] = useState(saved.bpm)
+  const [bpm, setBpm] = useState(opened.bpm)
   // What the tempo box is showing while it is being typed in, kept apart from
   // `bpm` so a half-typed number is not corrected mid-keystroke: the 4 on the
   // way to 45 would otherwise snap to the minimum of 40.
-  const [bpmText, setBpmText] = useState(() => String(saved.bpm))
+  const [bpmText, setBpmText] = useState(() => String(opened.bpm))
   const [swing, setSwing] = useState<SwingId>(saved.swing)
   const [countIn, setCountIn] = useState(saved.countIn)
   const [playBass, setPlayBass] = useState(saved.playBass)
@@ -177,21 +198,79 @@ export default function App() {
     else void play(currentBar, loopFor(currentBar, barRepeat), countIn)
   }, [playing, stop, play, currentBar, barRepeat, countIn])
 
+  // Set when a level change is what brought the new exercise in, and read once
+  // by the effect below. Every other way of changing the music stops instead.
+  const carryOnRef = useRef(false)
+
+  /**
+   * A new level is a new thing to practise, so it comes with a new exercise and
+   * is read from the top. What was already sounding carries straight on into
+   * it: having to press Play again at every step of the ladder is a break in
+   * the practice rather than a help.
+   */
+  const changeLevel = useCallback(
+    (next: number) => {
+      const target = Math.min(Math.max(next, FIRST_LEVEL), LAST_LEVEL) as Level
+      if (target === level) return
+      carryOnRef.current = player.isPlaying
+      setLevel(target)
+      setSeed(randomSeed())
+    },
+    [level, player],
+  )
+
+  const stepLevel = useCallback(
+    (delta: number) => changeLevel(level + delta),
+    [changeLevel, level],
+  )
+
+  const applyBpm = useCallback((value: number) => {
+    setBpm(value)
+    setBpmText(String(value))
+  }, [])
+
+  // Held down, the bar keys move the tempo instead. It takes effect on the
+  // running transport, so the music speeds up under the reader rather than
+  // starting again.
+  const stepTempo = useCallback(
+    (delta: number) => applyBpm(clampTempo(bpm + delta)),
+    [applyBpm, bpm],
+  )
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target
       if (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) return
+      // Anything held down belongs to the browser — Cmd-left is Back, and
+      // taking that would be worse than the shortcut is worth.
+      if (event.metaKey || event.ctrlKey || event.altKey) return
 
-      switch (event.key) {
+      switch (event.key.length === 1 ? event.key.toLowerCase() : event.key) {
         case 'ArrowLeft':
           event.preventDefault()
-          stepBar(-1)
+          if (event.shiftKey) stepTempo(-TEMPO_STEP)
+          else stepBar(-1)
           break
         case 'ArrowRight':
           event.preventDefault()
-          stepBar(1)
+          if (event.shiftKey) stepTempo(TEMPO_STEP)
+          else stepBar(1)
           break
+        // The levels sit behind shift with the tempo, so the four arrows on
+        // their own stay what they were: reading through the bars. Up and down
+        // follow the list rather than the ladder — level 1 is at the top of
+        // it, and a select under the same keys moves that way too.
         case 'ArrowUp':
+          if (!event.shiftKey) break
+          event.preventDefault()
+          stepLevel(-1)
+          break
+        case 'ArrowDown':
+          if (!event.shiftKey) break
+          event.preventDefault()
+          stepLevel(1)
+          break
+        case 'r':
           event.preventDefault()
           toggleBarRepeat()
           break
@@ -203,7 +282,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [stepBar, toggleBarRepeat, toggle])
+  }, [stepBar, stepLevel, stepTempo, toggleBarRepeat, toggle])
 
   // Tempo and mutes take effect without interrupting playback.
   useEffect(() => player.setBpm(bpm), [player, bpm])
@@ -220,23 +299,49 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [swing])
 
-  // A new level, key, form or seed is different music. Playing straight on
-  // through it gives nobody a chance to look at it, so stop and go back to the
-  // top and let Play start it.
+  // A new key, form or seed is different music. Playing straight on through it
+  // gives nobody a chance to look at it, so stop and go back to the top and
+  // let Play start it. A new level is the exception: the reader asked for the
+  // next rung while reading, and the music follows them onto it without a
+  // count-in, since the beat they are in is already going.
   useEffect(() => {
-    stop()
     setCurrentBar(0)
+    setPending(null)
+    clearHighlight()
+    if (!carryOnRef.current) {
+      stop()
+      return
+    }
+    carryOnRef.current = false
+    void play(0, loopFor(0, barRepeat))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exercise])
 
   useEffect(() => () => player.stop(), [player])
 
+  /**
+   * Keeps the address bar showing what is being read, without leaving a trail
+   * in the history. A level change is written at once — it is one press, and
+   * the address is worth copying straight after it. A tempo change waits for
+   * the value to stop moving.
+   */
+  const writtenLevel = useRef<Level | null>(null)
+
+  useEffect(() => {
+    const atOnce = writtenLevel.current !== level
+    writtenLevel.current = level
+    if (atOnce) {
+      saveUrlState({ level, bpm })
+      return
+    }
+    const timer = setTimeout(() => saveUrlState({ level, bpm }), TEMPO_URL_DELAY)
+    return () => clearTimeout(timer)
+  }, [level, bpm])
+
   useEffect(() => {
     saveSettings({
       keyName,
       progressionId,
-      level,
-      bpm,
       swing,
       countIn,
       playBass,
@@ -247,8 +352,6 @@ export default function App() {
   }, [
     keyName,
     progressionId,
-    level,
-    bpm,
     swing,
     countIn,
     playBass,
@@ -256,11 +359,6 @@ export default function App() {
     playDrums,
     showNoteNames,
   ])
-
-  const applyBpm = (value: number) => {
-    setBpm(value)
-    setBpmText(String(value))
-  }
 
   /*
    * A number is taken as it is typed, and only held to the range once the box
@@ -392,18 +490,13 @@ export default function App() {
           <label className="field level">
             <span className="field-label">Level</span>
             {/*
-              A new level is a new thing to practise, so it comes with a new
-              exercise. Key and form do not: leaving the seed alone there is
-              what lets the same line be read in another key, which is a
-              practice of its own.
+              Picking from the list goes through `changeLevel`, the same as the
+              up and down keys, so a new exercise arrives either way. Key and
+              form do not draw one: leaving the seed alone there is what lets
+              the same line be read in another key, which is a practice of its
+              own.
             */}
-            <select
-              value={level}
-              onChange={(e) => {
-                setLevel(Number(e.target.value) as Level)
-                setSeed(randomSeed())
-              }}
-            >
+            <select value={level} onChange={(e) => changeLevel(Number(e.target.value))}>
               {/*
                 Grouped by what is being practised rather than by how hard it
                 is. The shape levels are not a harder version of the mixed
@@ -496,7 +589,10 @@ export default function App() {
         </p>
         <p className="note keys">
           <kbd>&#8592;</kbd> previous bar &middot; <kbd>&#8594;</kbd> next bar &middot;{' '}
-          <kbd>&#8593;</kbd> repeat this bar &middot; <kbd>space</kbd> play/stop
+          <kbd>shift</kbd>+<kbd>&#8592;</kbd>/<kbd>&#8594;</kbd> tempo by {TEMPO_STEP} &middot;{' '}
+          <kbd>shift</kbd>+<kbd>&#8593;</kbd> level down &middot;{' '}
+          <kbd>shift</kbd>+<kbd>&#8595;</kbd> level up &middot; <kbd>R</kbd> repeat this bar{' '}
+          &middot; <kbd>space</kbd> play/stop
         </p>
       </main>
     </div>

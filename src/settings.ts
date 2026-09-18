@@ -1,6 +1,5 @@
 import type { Level } from './music/rhythm'
 import type { SwingId } from './audio/schedule'
-import { LEVELS } from './music/rhythm'
 import { SWING_SETTINGS } from './audio/schedule'
 import { KEYS, RANDOM_KEY } from './music/pitch'
 import { PROGRESSIONS } from './music/progression'
@@ -11,14 +10,22 @@ export const TEMPO_MIN = 40
 export const TEMPO_MAX = 240
 
 /**
- * What the page remembers between visits. The seed is deliberately left out:
- * coming back should give a fresh exercise, not the one already read.
+ * Where a visit starts when the URL says nothing. The level and the tempo live
+ * in the address bar rather than in storage (see `src/url.ts`), so these are
+ * what a bare link opens on.
+ */
+export const DEFAULT_LEVEL: Level = 2
+export const DEFAULT_TEMPO = 60
+
+/**
+ * What the page remembers between visits. Three things are deliberately left
+ * out: the seed, because coming back should give a fresh exercise rather than
+ * the one already read, and the level and the tempo, because those are carried
+ * by the URL instead.
  */
 export interface Settings {
   keyName: string
   progressionId: string
-  level: Level
-  bpm: number
   swing: SwingId
   countIn: boolean
   playBass: boolean
@@ -30,8 +37,6 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   keyName: 'Bb',
   progressionId: 'blues',
-  level: 2,
-  bpm: 60,
   // Medium by default: the 2:1 triplet feel the notation itself implies, which
   // is the least ambiguous thing to read against.
   swing: 'medium',
@@ -56,11 +61,6 @@ function boolean(value: unknown, fallback: boolean): boolean {
 export const clampTempo = (value: number): number =>
   Math.min(TEMPO_MAX, Math.max(TEMPO_MIN, Math.round(value)))
 
-function tempo(value: unknown, fallback: number): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
-  return clampTempo(value)
-}
-
 /**
  * Reads whatever was stored field by field. Anything missing or no longer
  * offered — a key that was dropped, a form that was renamed — falls back on
@@ -80,8 +80,6 @@ export function readSettings(stored: unknown): Settings {
       PROGRESSIONS.map((p) => p.id),
       DEFAULT_SETTINGS.progressionId,
     ),
-    level: oneOf(raw.level, LEVELS, DEFAULT_SETTINGS.level),
-    bpm: tempo(raw.bpm, DEFAULT_SETTINGS.bpm),
     swing: oneOf(
       raw.swing,
       SWING_SETTINGS.map((s) => s.id),

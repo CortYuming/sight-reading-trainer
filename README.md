@@ -69,19 +69,32 @@ keep the height they had.
 ## Playing along
 
 - **Space** starts and stops. A count-in of one bar precedes the first note.
-- **Left** and **right** step through the bars, **up** loops the current bar on
+- **Left** and **right** step through the bars, **R** loops the current bar on
   its own. The same controls sit in the toolbar for touch, and clicking a row
   jumps to that bar.
+- **Shift** and the arrows change what is being read rather than where it is
+  read from: **shift-left** and **shift-right** move the tempo by 5, and
+  **shift-up** and **shift-down** move a level at a time. The arrows on their
+  own stay with the bars, which is what they are wanted for most.
+- Stepping a level is the same as picking one from the list: a new exercise at
+  the new level, read from the top. Whatever was sounding carries straight on
+  into it without a count-in — being sent back to Play at every rung of the
+  ladder is a break in the practice rather than a help. The keys move the way
+  the list reads rather than the way the ladder climbs: level 1 is at the top
+  of it, so **shift-up** is the easier way, which is also where the same key
+  would take the select itself.
 - Moves land on the next barline rather than the instant they are pressed, so
   the bar being read is never cut in half. The queued bar is marked with a
   dashed line in the margin.
 - Swing has four depths. Measurements of jazz drummers put the ratio near 3.5:1
   at slow tempos and close to 1:1 above 250bpm; the default sits in the middle,
   at the 2:1 triplet feel the notation implies.
-- **Tempo** is dragged on the slider or typed into the box beside it. What is
-  typed stands as it is until the box is left or Enter is pressed, and is held
-  to 40-240 only then: correcting every keystroke would put 45 out of reach,
-  since the 4 on the way to it is below the minimum.
+- **Tempo** is dragged on the slider, typed into the box beside it, or stepped
+  by 5 with **shift-left** and **shift-right**. It takes effect on the running
+  transport, so the music speeds up under the reader rather than starting
+  again. What is typed stands as it is until the box is left or Enter is
+  pressed, and is held to 40-240 only then: correcting every keystroke would
+  put 45 out of reach, since the 4 on the way to it is below the minimum.
 - **Drums** play the jazz ride pattern — a stroke on every beat and a swung
   eighth after two and four — with the hi-hat foot closing on two and four. The
   swung strokes take the same ratio the melody does, so the kit is what the
@@ -105,11 +118,19 @@ keep the height they had.
   working that out on the way in is part of the reading. The draw comes out of
   the seed rather than out of `Math.random`, so going back to an exercise in
   the history comes back to the key it was read in.
-- Key, form, level, tempo, swing and the five switches are kept in the browser
-  and restored on the next visit. The exercise is not: coming back gives a new
-  one to read. Changing the level draws a new one as well, since a new level is
-  a new thing to practise. Changing key or form does not, so the same line can
-  be read again somewhere else on the neck.
+- Key, form, swing and the five switches are kept in the browser and restored
+  on the next visit. The exercise is not: coming back gives a new one to read.
+  Changing key or form does not draw a new one either, so the same line can be
+  read again somewhere else on the neck.
+- **Level and tempo live in the address bar** rather than in storage:
+  `?lv=5&bpm=90`. A link opens on what it says, and a link opened once does not
+  quietly become the default for every visit after it — which is what holding
+  the same value in two places would do. Both are written back as they change,
+  without a history entry, so Back still leaves the page rather than walking
+  out of the levels just stepped through. The tempo is written once it stops
+  moving: dragging the slider fires on every step, and Safari refuses a history
+  entry after about a hundred in half a minute. A bare link opens at level 2 and
+  60bpm.
 - **History** lists the last five exercises, newest first, and going back to one
   moves it to the top — so the next new exercise pushes out something untouched
   rather than the one just picked out to practise. Only what an exercise is
