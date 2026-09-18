@@ -105,11 +105,20 @@ keep the height they had.
   working that out on the way in is part of the reading. The draw comes out of
   the seed rather than out of `Math.random`, so going back to an exercise in
   the history comes back to the key it was read in.
-- Key, form, level, tempo, swing and the five switches are kept in the browser
-  and restored on the next visit. The exercise is not: coming back gives a new
-  one to read. Changing the level draws a new one as well, since a new level is
-  a new thing to practise. Changing key or form does not, so the same line can
-  be read again somewhere else on the neck.
+- Key, form, swing and the five switches are kept in the browser and restored
+  on the next visit. The exercise is not: coming back gives a new one to read.
+  Changing the level draws a new one as well, since a new level is a new thing
+  to practise. Changing key or form does not, so the same line can be read
+  again somewhere else on the neck.
+- **Level and tempo live in the address bar** rather than in storage:
+  `?lv=5&bpm=90`. A link opens on what it says, and a link opened once does not
+  quietly become the default for every visit after it — which is what holding
+  the same value in two places would do. Both are written back as they change,
+  without a history entry, so Back still leaves the page rather than walking
+  out of the levels just stepped through. The tempo is written once it stops
+  moving: dragging the slider fires on every step, and Safari refuses a history
+  entry after about a hundred in half a minute. A bare link opens at level 2 and
+  60bpm.
 - **History** lists the last five exercises, newest first, and going back to one
   moves it to the top — so the next new exercise pushes out something untouched
   rather than the one just picked out to practise. Only what an exercise is

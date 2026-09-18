@@ -11,11 +11,20 @@ import { Player } from './audio/player'
 import { Score } from './components/Score'
 import { TEMPO_MAX, TEMPO_MIN, clampTempo, loadSettings, saveSettings } from './settings'
 import type { Settings } from './settings'
+import { loadUrlState, saveUrlState } from './url'
 import { entryId, entryLabel, loadHistory, remember, saveHistory } from './history'
 import type { HistoryEntry } from './history'
 import './App.css'
 
 const randomSeed = () => Math.floor(Math.random() * 1_000_000)
+
+/**
+ * How long the tempo has to stand still before it is written to the URL.
+ * Dragging the slider fires on every step, and Safari refuses a history entry
+ * after about a hundred in half a minute, so the writing waits for the hand to
+ * settle. Short enough that letting go and copying the address still gets it.
+ */
+const TEMPO_URL_DELAY = 300
 
 /** What the player should loop: the one bar being repeated, or the lot. */
 const loopFor = (bar: number, repeat: boolean): number | null => (repeat ? bar : null)
@@ -25,16 +34,22 @@ export default function App() {
   savedRef.current ??= loadSettings()
   const saved = savedRef.current
 
+  // The level and the tempo come from the address bar rather than from
+  // storage, so a link opens on what it says. Everything else is remembered.
+  const openedRef = useRef<ReturnType<typeof loadUrlState> | null>(null)
+  openedRef.current ??= loadUrlState()
+  const opened = openedRef.current
+
   const [keyName, setKeyName] = useState(saved.keyName)
   const [progressionId, setProgressionId] = useState(saved.progressionId)
-  const [level, setLevel] = useState<Level>(saved.level)
+  const [level, setLevel] = useState<Level>(opened.level)
   const [seed, setSeed] = useState(randomSeed)
 
-  const [bpm, setBpm] = useState(saved.bpm)
+  const [bpm, setBpm] = useState(opened.bpm)
   // What the tempo box is showing while it is being typed in, kept apart from
   // `bpm` so a half-typed number is not corrected mid-keystroke: the 4 on the
   // way to 45 would otherwise snap to the minimum of 40.
-  const [bpmText, setBpmText] = useState(() => String(saved.bpm))
+  const [bpmText, setBpmText] = useState(() => String(opened.bpm))
   const [swing, setSwing] = useState<SwingId>(saved.swing)
   const [countIn, setCountIn] = useState(saved.countIn)
   const [playBass, setPlayBass] = useState(saved.playBass)
@@ -231,12 +246,29 @@ export default function App() {
 
   useEffect(() => () => player.stop(), [player])
 
+  /**
+   * Keeps the address bar showing what is being read, without leaving a trail
+   * in the history. A level change is written at once — it is one press, and
+   * the address is worth copying straight after it. A tempo change waits for
+   * the value to stop moving.
+   */
+  const writtenLevel = useRef<Level | null>(null)
+
+  useEffect(() => {
+    const atOnce = writtenLevel.current !== level
+    writtenLevel.current = level
+    if (atOnce) {
+      saveUrlState({ level, bpm })
+      return
+    }
+    const timer = setTimeout(() => saveUrlState({ level, bpm }), TEMPO_URL_DELAY)
+    return () => clearTimeout(timer)
+  }, [level, bpm])
+
   useEffect(() => {
     saveSettings({
       keyName,
       progressionId,
-      level,
-      bpm,
       swing,
       countIn,
       playBass,
@@ -247,8 +279,6 @@ export default function App() {
   }, [
     keyName,
     progressionId,
-    level,
-    bpm,
     swing,
     countIn,
     playBass,

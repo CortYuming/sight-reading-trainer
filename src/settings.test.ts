@@ -9,11 +9,10 @@ describe('readSettings', () => {
   })
 
   it('keeps the fields it recognises', () => {
-    const stored = { keyName: 'G', progressionId: 'ii-v-i', level: 4, swing: 'straight' }
+    const stored = { keyName: 'G', progressionId: 'ii-v-i', swing: 'straight' }
     const settings = readSettings(stored)
     expect(settings.keyName).toBe('G')
     expect(settings.progressionId).toBe('ii-v-i')
-    expect(settings.level).toBe(4)
     expect(settings.swing).toBe('straight')
   })
 
@@ -27,13 +26,6 @@ describe('readSettings', () => {
     expect(readSettings({ keyName: 'random' }).keyName).toBe('random')
   })
 
-  it('clamps the tempo to the range the slider offers', () => {
-    expect(readSettings({ bpm: 1000 }).bpm).toBe(240)
-    expect(readSettings({ bpm: 5 }).bpm).toBe(40)
-    expect(readSettings({ bpm: 90.4 }).bpm).toBe(90)
-    expect(readSettings({ bpm: 'fast' }).bpm).toBe(DEFAULT_SETTINGS.bpm)
-  })
-
   it('takes a switch only when it is really a boolean', () => {
     expect(readSettings({ countIn: false }).countIn).toBe(false)
     expect(readSettings({ countIn: 'no' }).countIn).toBe(DEFAULT_SETTINGS.countIn)
@@ -41,6 +33,13 @@ describe('readSettings', () => {
 
   it('does not remember the seed', () => {
     expect(readSettings({ seed: 1234 })).not.toHaveProperty('seed')
+  })
+
+  it('leaves the level and the tempo to the URL, even if an old visit stored them', () => {
+    const settings = readSettings({ level: 4, bpm: 120, keyName: 'G' })
+    expect(settings).not.toHaveProperty('level')
+    expect(settings).not.toHaveProperty('bpm')
+    expect(settings.keyName).toBe('G')
   })
 })
 
@@ -52,7 +51,7 @@ describe('loadSettings', () => {
   })
 
   it('reads back what was saved', () => {
-    const settings = { ...DEFAULT_SETTINGS, keyName: 'F', bpm: 120, playBass: false }
+    const settings = { ...DEFAULT_SETTINGS, keyName: 'F', playBass: false }
     saveSettings(settings)
     expect(loadSettings()).toEqual(settings)
   })
