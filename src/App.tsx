@@ -18,6 +18,9 @@ import './App.css'
 
 const randomSeed = () => Math.floor(Math.random() * 1_000_000)
 
+const FIRST_LEVEL = LEVELS[0]
+const LAST_LEVEL = LEVELS[LEVELS.length - 1]
+
 /**
  * How long the tempo has to stand still before it is written to the URL.
  * Dragging the slider fires on every step, and Safari refuses a history entry
@@ -192,12 +195,41 @@ export default function App() {
     else void play(currentBar, loopFor(currentBar, barRepeat), countIn)
   }, [playing, stop, play, currentBar, barRepeat, countIn])
 
+  // Set when a level change is what brought the new exercise in, and read once
+  // by the effect below. Every other way of changing the music stops instead.
+  const carryOnRef = useRef(false)
+
+  /**
+   * A new level is a new thing to practise, so it comes with a new exercise and
+   * is read from the top. What was already sounding carries straight on into
+   * it: having to press Play again at every step of the ladder is a break in
+   * the practice rather than a help.
+   */
+  const changeLevel = useCallback(
+    (next: number) => {
+      const target = Math.min(Math.max(next, FIRST_LEVEL), LAST_LEVEL) as Level
+      if (target === level) return
+      carryOnRef.current = player.isPlaying
+      setLevel(target)
+      setSeed(randomSeed())
+    },
+    [level, player],
+  )
+
+  const stepLevel = useCallback(
+    (delta: number) => changeLevel(level + delta),
+    [changeLevel, level],
+  )
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target
       if (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) return
+      // Anything held down belongs to the browser — Cmd-left is Back, and
+      // taking that would be worse than the shortcut is worth.
+      if (event.metaKey || event.ctrlKey || event.altKey) return
 
-      switch (event.key) {
+      switch (event.key.length === 1 ? event.key.toLowerCase() : event.key) {
         case 'ArrowLeft':
           event.preventDefault()
           stepBar(-1)
@@ -207,6 +239,14 @@ export default function App() {
           stepBar(1)
           break
         case 'ArrowUp':
+          event.preventDefault()
+          stepLevel(1)
+          break
+        case 'ArrowDown':
+          event.preventDefault()
+          stepLevel(-1)
+          break
+        case 'r':
           event.preventDefault()
           toggleBarRepeat()
           break
@@ -218,7 +258,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [stepBar, toggleBarRepeat, toggle])
+  }, [stepBar, stepLevel, toggleBarRepeat, toggle])
 
   // Tempo and mutes take effect without interrupting playback.
   useEffect(() => player.setBpm(bpm), [player, bpm])
@@ -235,12 +275,21 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [swing])
 
-  // A new level, key, form or seed is different music. Playing straight on
-  // through it gives nobody a chance to look at it, so stop and go back to the
-  // top and let Play start it.
+  // A new key, form or seed is different music. Playing straight on through it
+  // gives nobody a chance to look at it, so stop and go back to the top and
+  // let Play start it. A new level is the exception: the reader asked for the
+  // next rung while reading, and the music follows them onto it without a
+  // count-in, since the beat they are in is already going.
   useEffect(() => {
-    stop()
     setCurrentBar(0)
+    setPending(null)
+    clearHighlight()
+    if (!carryOnRef.current) {
+      stop()
+      return
+    }
+    carryOnRef.current = false
+    void play(0, loopFor(0, barRepeat))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exercise])
 
@@ -422,18 +471,13 @@ export default function App() {
           <label className="field level">
             <span className="field-label">Level</span>
             {/*
-              A new level is a new thing to practise, so it comes with a new
-              exercise. Key and form do not: leaving the seed alone there is
-              what lets the same line be read in another key, which is a
-              practice of its own.
+              Picking from the list goes through `changeLevel`, the same as the
+              up and down keys, so a new exercise arrives either way. Key and
+              form do not draw one: leaving the seed alone there is what lets
+              the same line be read in another key, which is a practice of its
+              own.
             */}
-            <select
-              value={level}
-              onChange={(e) => {
-                setLevel(Number(e.target.value) as Level)
-                setSeed(randomSeed())
-              }}
-            >
+            <select value={level} onChange={(e) => changeLevel(Number(e.target.value))}>
               {/*
                 Grouped by what is being practised rather than by how hard it
                 is. The shape levels are not a harder version of the mixed
@@ -526,7 +570,8 @@ export default function App() {
         </p>
         <p className="note keys">
           <kbd>&#8592;</kbd> previous bar &middot; <kbd>&#8594;</kbd> next bar &middot;{' '}
-          <kbd>&#8593;</kbd> repeat this bar &middot; <kbd>space</kbd> play/stop
+          <kbd>&#8593;</kbd> level up &middot; <kbd>&#8595;</kbd> level down &middot;{' '}
+          <kbd>R</kbd> repeat this bar &middot; <kbd>space</kbd> play/stop
         </p>
       </main>
     </div>

@@ -69,9 +69,14 @@ keep the height they had.
 ## Playing along
 
 - **Space** starts and stops. A count-in of one bar precedes the first note.
-- **Left** and **right** step through the bars, **up** loops the current bar on
+- **Left** and **right** step through the bars, **R** loops the current bar on
   its own. The same controls sit in the toolbar for touch, and clicking a row
   jumps to that bar.
+- **Up** and **down** move a level at a time, which is the same as picking one
+  from the list: a new exercise at the new level, read from the top. Whatever
+  was sounding carries straight on into it without a count-in — being sent back
+  to Play at every rung of the ladder is a break in the practice rather than a
+  help.
 - Moves land on the next barline rather than the instant they are pressed, so
   the bar being read is never cut in half. The queued bar is marked with a
   dashed line in the margin.
@@ -107,9 +112,8 @@ keep the height they had.
   the history comes back to the key it was read in.
 - Key, form, swing and the five switches are kept in the browser and restored
   on the next visit. The exercise is not: coming back gives a new one to read.
-  Changing the level draws a new one as well, since a new level is a new thing
-  to practise. Changing key or form does not, so the same line can be read
-  again somewhere else on the neck.
+  Changing key or form does not draw a new one either, so the same line can be
+  read again somewhere else on the neck.
 - **Level and tempo live in the address bar** rather than in storage:
   `?lv=5&bpm=90`. A link opens on what it says, and a link opened once does not
   quietly become the default for every visit after it — which is what holding
